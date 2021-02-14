@@ -2,9 +2,10 @@
   (:mix-reexport cl iterate)
   (:import-from gefjon-utils
                 define-class define-special
-                typedec func void list-of tuple hash-map)
+                typedec func void list-of tuple hash-map
+                shallow-copy)
   (:import-from alexandria
-                curry rcurry)
+                curry rcurry if-let)
   (:export
    name unique-name
 
@@ -16,9 +17,9 @@
    ;; gefjon-utils
    define-class define-special
    typedec func void list-of tuple hash-map
-
+   shallow-copy
    ;; alexandria
-   curry rcurry))
+   curry rcurry if-let))
 (in-package ploy/prologue)
 
 (eval-when (:compile-toplevel :load-toplevel)
