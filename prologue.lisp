@@ -3,7 +3,7 @@
   (:import-from gefjon-utils
                 define-class define-special
                 typedec func void list-of tuple hash-map
-                shallow-copy)
+                shallow-copy with-slot-accessors)
   (:import-from alexandria
                 curry rcurry if-let)
   (:export
@@ -17,7 +17,7 @@
    ;; gefjon-utils
    define-class define-special
    typedec func void list-of tuple hash-map
-   shallow-copy
+   shallow-copy with-slot-accessors
    ;; alexandria
    curry rcurry if-let))
 (in-package ploy/prologue)

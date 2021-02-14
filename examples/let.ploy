@@ -1,0 +1,7 @@
+;;;; -*- mode:lisp; -*-
+
+(let (foo bar)
+  (let baz 30)
+  (+ baz bar))
+
+(exit (foo -30))

@@ -41,7 +41,7 @@
   :superclasses (expr))
 
 (define-class call
-    ((operator ident)
+    ((operator expr)
      (args (list-of ident)))
   :superclasses (expr))
 

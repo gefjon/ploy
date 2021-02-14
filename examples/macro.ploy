@@ -1,0 +1,5 @@
+;;;; -*- mode:lisp; -*-
+
+(macrolet (identity foo) foo)
+
+(exit (+ (identity -2) (identity 2)))
