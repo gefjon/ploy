@@ -2,4 +2,6 @@
 
 (macrolet (identity foo) foo)
 
-(exit (+ (identity -2) (identity 2)))
+(macrolet (add-one foo) `(+ 1 ,foo))
+
+(exit (+ (identity -2) (add-one 1)))

@@ -53,6 +53,10 @@
   (eval bindings (ir1:discard expr))
   (eval bindings (ir1:ret expr)))
 
+(defmethod eval ((bindings list) (expr ir1:comma))
+  (declare (ignorable bindings))
+  (error "Comma not inside a backquote: ~a" expr))
+
 (define-class closure
     ((fn ir1:fn)
      (bindings (list-of (cons ir1:ident t)))))
@@ -67,6 +71,14 @@
   (declare (ignorable bindings))
   expr)
 
+(defgeneric quasiquote (bindings expr))
+
+(defmethod quasiquote (bindings (expr ir1:expr))
+  (ir1:map-nested-exprs (curry #'quasiquote bindings) expr))
+
+(defmethod quasiquote (bindings (expr ir1:comma))
+  (eval bindings (ir1:term expr)))
+
 (defmethod eval ((bindings list) (expr ir1:call))
   (let* ((closure (eval bindings (ir1:operator expr)))
          (args (mapcar (curry #'eval bindings) (ir1:args expr))))
@@ -74,6 +86,9 @@
     (let* ((fn (fn closure))
            (inner-scope (pairlis (ir1:arglist fn) args (bindings closure))))
       (eval inner-scope (ir1:body fn)))))
+
+(defmethod eval ((bindings list) (expr ir1:backquote))
+  (quasiquote bindings (ir1:term expr)))
 
 (typedec #'macroexpand-1 (func (ir1:macro (list-of ir1:expr)) ir1:expr))
 (defun macroexpand-1 (macro args)
@@ -95,23 +110,16 @@
          (args (mapcar (curry #'macroexpand-walker macros) (ir1:args expr))))
     (macroexpand macros operator args)))
 
-(defmethod macroexpand-walker ((macros list) (expr ir1:macro))
-  (shallow-copy expr
-                :body (macroexpand-walker macros (ir1:body expr))))
-
-(defmethod macroexpand-walker ((macros list) (expr ir1:fn))
-  (shallow-copy expr
-                :body (macroexpand-walker macros (ir1:body expr))))
-
-(defmethod macroexpand-walker ((macros list) (expr ir1:ident))
-  (declare (ignorable macros))
-  expr)
+(defmethod macroexpand-walker ((macros list) (expr ir1:expr))
+  (ir1:map-nested-exprs (curry #'macroexpand-walker macros) expr))
 
 (defmethod macroexpand-walker ((macros list) (expr ir1:quote))
   (declare (ignorable macros))
   expr)
 
-(defmethod macroexpand-walker ((macros list) (expr ir1:prog2))
-  (shallow-copy expr
-                :discard (macroexpand-walker macros (ir1:discard expr))
-                :ret (macroexpand-walker macros (ir1:ret expr))))
+(defmethod macroexpand-walker ((macros list) (expr ir1:backquote))
+  (declare (ignorable macros))
+  expr)
+
+(defmethod macroexpand-walker ((macros list) (expr ir1:comma))
+  (error "comma not inside a backquote!"))

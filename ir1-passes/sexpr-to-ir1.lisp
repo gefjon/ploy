@@ -16,7 +16,7 @@
 (defun find-ident (name scope)
   (or (gethash name (contents scope))
       (and (parent scope) (find-ident name (parent scope)))
-      (error "Unbound identifier ~a in scope ~a" name (name scope))))
+      (make-ident name scope)))
 
 (typedec #'make-ident (func (name scope) ir1:ident))
 (defun make-ident (name scope)
@@ -134,3 +134,22 @@
   (make-let enclosing-scope name (scoped-lambda enclosing-scope name arglist body 'ir1:macro)
                 (lambda (inner-scope)
                   (parse-ir1 inner-scope (rest remaining-body) (first remaining-body)))))
+
+(define-expr (ploy-user:|backquote| term) (enclosing-scope remaining-body)
+  (assert (not remaining-body) ()
+          "backquote result unused: ~a" `(ploy-user:|backquote| ,term))
+  (make-instance 'ir1:backquote
+                 :term (parse-ir1 enclosing-scope nil term)))
+
+(define-expr (ploy-user:|comma| term) (enclosing-scope remaining-body)
+  (make-instance 'ir1:comma
+                 :term (parse-ir1 enclosing-scope remaining-body term)))
+
+(define-expr (ploy-user:|quote| term) (enclosing-scope remaining-body)
+  (assert (not remaining-body) ()
+          "quoted literal unused: ~a" term)
+  (if (typep term 'literal)
+      ;; avoid double-quoting literals
+      (parse-ir1 enclosing-scope nil term)
+      (make-instance 'quote
+                     :term (parse-ir1 enclosing-scope nil term))))

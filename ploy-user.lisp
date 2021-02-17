@@ -6,4 +6,6 @@
 
    |exit|
 
+   |backquote| |comma| |quote|
+
    +))
