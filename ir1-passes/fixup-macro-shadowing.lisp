@@ -11,7 +11,7 @@
 
 (defmethod make-shadowed-idents-eq ((substitutions list) (expr ir1:ident))
   (if-let ((subst (cdr (assoc expr substitutions))))
-    (make-shadowed-idents-eq subst)
+    (make-shadowed-idents-eq substitutions subst)
     expr))
 
 (defmethod make-shadowed-idents-eq ((substitutions list) (expr ir1:let))
