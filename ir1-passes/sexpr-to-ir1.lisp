@@ -3,7 +3,11 @@
   (:use ploy/prologue)
   (:import-from ploy/ir1-expr)
   (:import-from ploy/ploy-user)
-  (:export parse-ir1))
+  (:export
+   parse-program
+
+   scope name contents parent
+   *global-scope*))
 (in-package ploy/ir1-passes/sexpr-to-ir1)
 
 (define-class scope
@@ -153,3 +157,7 @@
       (parse-ir1 enclosing-scope nil term)
       (make-instance 'quote
                      :term (parse-ir1 enclosing-scope nil term))))
+
+(typedec #'parse-program (func (list &optional scope) ir1:expr))
+(defun parse-program (program &optional (scope *global-scope*))
+  (parse-ir1 scope (rest program) (first program)))

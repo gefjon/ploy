@@ -1,7 +1,8 @@
 (uiop:define-package ploy/ir1-passes/macroexpand
   (:use ploy/prologue)
   (:shadow macroexpand macroexpand-1 eval)
-  (:import-from ploy/ir1-expr))
+  (:import-from ploy/ir1-expr)
+  (:export macroexpand-program))
 (in-package ploy/ir1-passes/macroexpand)
 
 (defgeneric macroexpand-walker (macros expr))
@@ -96,7 +97,9 @@
   (eval (mapcar #'cons (ir1:arglist macro) args)
         (ir1:body macro)))
 
-(typedec #'macroexpand (func ((list-of (cons ir1:ident ir1:macro)) ir1:expr (list-of ir1:expr)) ir1:expr))
+(typedec #'macroexpand
+         (func ((list-of (cons ir1:ident ir1:macro)) ir1:expr (list-of ir1:expr))
+               ir1:expr))
 (defun macroexpand (macros operator args)
   (if-let ((macro (resolve-to-macro macros operator)))
     (macroexpand-walker macros
@@ -127,3 +130,8 @@
 
 (defmethod macroexpand-walker ((macros list) (expr ir1:comma))
   (error "comma not inside a backquote!"))
+
+(typedec #'macroexpand-program
+         (func (ir1:expr &optional (list-of (cons ir1:ident ir1:macro))) ir1:expr))
+(defun macroexpand-program (program &optional macros)
+  (macroexpand-walker macros program))
