@@ -110,6 +110,10 @@
          (args (mapcar (curry #'macroexpand-walker macros) (ir1:args expr))))
     (macroexpand macros operator args)))
 
+(defmethod macroexpand-walker ((macros list) (expr ir1:ident))
+  (declare (ignorable macros))
+  expr)
+
 (defmethod macroexpand-walker ((macros list) (expr ir1:expr))
   (ir1:map-nested-exprs (curry #'macroexpand-walker macros) expr))
 
