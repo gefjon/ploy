@@ -38,11 +38,9 @@
                               (declare (ignorable ploy/builtins:exit))
                               ,compiled-form))))))
 
-(typedec #'compile-file (func ((or string pathname)) t ;; compiled-function
-                              ))
+(typedec #'compile-file (func ((or string pathname)) compiled-function))
 (defun compile-file (filename)
   (pipe filename
     #'ploy-read-file
     #'compile-forms
-    ;; #'emit-compiled-function
-    ))
+    #'emit-compiled-function))
