@@ -111,8 +111,8 @@
   (print-object (lit quote) stream))
 
 (defmethod print-object ((call call) stream)
+  (write-char #\( stream)
   (pprint-logical-block (stream nil)
-    (write-char #\( stream)
     (write (operator call) :stream stream)
     (iter (for arg in (args call))
       (write-char #\space stream)
