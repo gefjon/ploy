@@ -4,4 +4,4 @@
 
 (macrolet (add-one foo) `(+ 1 ,foo))
 
-(exit (+ (identity -2) (add-one 1)))
+(+ (identity -2) (add-one 1))

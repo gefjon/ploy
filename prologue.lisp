@@ -3,9 +3,10 @@
   (:import-from gefjon-utils
                 define-class define-special
                 typedec func void list-of tuple hash-map
-                shallow-copy with-slot-accessors)
+                shallow-copy with-slot-accessors
+                ~> pipe)
   (:import-from alexandria
-                curry rcurry if-let)
+                curry rcurry if-let ensure-gethash make-gensym symbolicate alist-hash-table)
   (:export
    name unique-name
 
@@ -18,8 +19,9 @@
    define-class define-special
    typedec func void list-of tuple hash-map
    shallow-copy with-slot-accessors
+   ~> pipe
    ;; alexandria
-   curry rcurry if-let))
+   curry rcurry if-let ensure-gethash make-gensym symbolicate alist-hash-table))
 (in-package ploy/prologue)
 
 (eval-when (:compile-toplevel :load-toplevel)

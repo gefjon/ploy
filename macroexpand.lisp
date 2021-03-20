@@ -1,9 +1,9 @@
-(uiop:define-package ploy/ir1-passes/macroexpand
+(uiop:define-package ploy/macroexpand
   (:use ploy/prologue)
   (:shadow macroexpand macroexpand-1 eval)
   (:import-from ploy/ir1-expr)
   (:export macroexpand-program))
-(in-package ploy/ir1-passes/macroexpand)
+(in-package ploy/macroexpand)
 
 (defgeneric macroexpand-walker (macros expr))
 
@@ -74,6 +74,11 @@
 
 (defgeneric quasiquote (bindings expr))
 
+(defmethod quasiquote (bindings (expr ir1:ident))
+  "Don't recurse inside idents, both to save work and to preserve eq"
+  (declare (ignore bindings))
+  expr)
+
 (defmethod quasiquote (bindings (expr ir1:expr))
   (ir1:map-nested-exprs (curry #'quasiquote bindings) expr))
 
@@ -114,6 +119,7 @@
     (macroexpand macros operator args)))
 
 (defmethod macroexpand-walker ((macros list) (expr ir1:ident))
+  "Don't recurse inside of idents, both to save work and to preserve eq"
   (declare (ignorable macros))
   expr)
 
