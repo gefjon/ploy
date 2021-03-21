@@ -7,6 +7,8 @@
   (:export
    #:map-nested-exprs
 
+   #:gen-ident
+
    #:expr
    #:prog2 #:discard #:ret
    #:ident #:name
@@ -134,3 +136,14 @@
       (pprint-newline :fill stream)
       (write-string "-> " stream)
       (write (body fn) :stream stream))))
+
+(typedec #'symbol-to-name (func (symbol) name))
+(defun symbol-to-name (symbol)
+  (if (typep symbol 'name) symbol
+      (values (intern (symbol-name symbol) (find-package '#:ploy-user)))))
+
+(typedec #'gen-ident (func (symbol) ir1:ident))
+(defun gen-ident (name)
+  (make-instance 'ir1:ident
+                 :name (symbol-to-name name)))
+

@@ -7,8 +7,7 @@
   (:export
    #:parse-program
 
-   #:scope #:name #:contents #:parent
-   #:*global-scope*))
+   #:scope #:name #:contents #:parent))
 (in-package #:ploy/sexpr-to-ir1)
 
 (define-class scope
@@ -17,21 +16,20 @@
                :initform (make-hash-table :test 'eq))
      (parent (or null scope))))
 
+(typedec #'make-ident (func (name scope) ir1:ident))
+(defun make-ident (name scope)
+  (setf (gethash name (contents scope))
+        (ir1:gen-ident name)))
+
 (typedec #'find-ident (func (name scope) ir1:ident))
 (defun find-ident (name scope)
   (or (gethash name (contents scope))
       (and (parent scope) (find-ident name (parent scope)))
       (make-ident name scope)))
 
-(typedec #'make-ident (func (name scope) ir1:ident))
-(defun make-ident (name scope)
-  (setf (gethash name (contents scope))
-        (make-instance 'ir1:ident
-                       :name name)))
-
-(defparameter *global-scope*
+(defun global-scope ()
   (let* ((scope (make-instance 'scope :name :global-scope :parent nil)))
-    (iter (for (binding) in *builtin-names*)
+    (iter (for binding in *builtin-names*)
       (setf (gethash (ir1:name binding) (contents scope)) binding))
     scope))
 
@@ -160,5 +158,5 @@
                      :term (parse-ir1 enclosing-scope nil term))))
 
 (typedec #'parse-program (func (list &optional scope) ir1:expr))
-(defun parse-program (program &optional (scope *global-scope*))
+(defun parse-program (program &optional (scope (global-scope)))
   (parse-ir1 scope (rest program) (first program)))

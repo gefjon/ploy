@@ -9,11 +9,6 @@
 (defmethod a-normal-transform ((expr ir1:expr))
   (ir1:map-nested-exprs #'a-normal-transform expr))
 
-(typedec #'gen-ident (func (symbol) ir1:ident))
-(defun gen-ident (name)
-  (make-instance 'ir1:ident
-                 :name name))
-
 (defmethod a-normal-transform ((expr ir1:call))
   (with-slot-accessors (ir1:operator ir1:args) expr
     (let* ((new-expr (shallow-copy expr)))
@@ -24,7 +19,7 @@
           ;; don't transsform args that are already a-normal-ey
           (collect arg into new-arglist at beginning)
           (next-iteration))
-        (for arg-binding = (gen-ident 'arg))
+        (for arg-binding = (ir1:gen-ident 'arg))
         (collect arg-binding into new-arglist at beginning)
         (setf inner (make-instance 'ir1:let
                                    :binding arg-binding
@@ -33,7 +28,7 @@
         (finally
          (setf (ir1:args new-expr) new-arglist)
          (unless (typep ir1:operator 'ir1:ident)
-           (let* ((op-binding (gen-ident 'operator)))
+           (let* ((op-binding (ir1:gen-ident 'operator)))
              (setf (ir1:operator new-expr) op-binding
                    inner (make-instance 'ir1:let
                                         :binding op-binding

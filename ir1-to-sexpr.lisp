@@ -9,8 +9,15 @@
 
 (defgeneric output-expr (expr))
 
+(defun builtin-ident-symbols ()
+  (let* ((table (make-hash-table :test 'eq)))
+    (iter (for ident in *builtin-names*)
+      (setf (gethash ident table)
+            (ir1:name ident)))
+    table))
+
 (defun output-program (program)
-  (let* ((*ident-symbols* (alist-hash-table *builtin-names* :test 'eq)))
+  (let* ((*ident-symbols* (builtin-ident-symbols)))
     (output-expr program)))
 
 (defun ident-symbol (ident)
