@@ -1,8 +1,8 @@
-(uiop:define-package ploy/fixup-macro-shadowing
-  (:use ploy/prologue)
-  (:import-from ploy/ir1-expr)
-  (:export fixup-shadowing-in-program))
-(in-package ploy/fixup-macro-shadowing)
+(uiop:define-package #:ploy/fixup-macro-shadowing
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/ir1-expr)
+  (:export #:fixup-shadowing-in-program))
+(in-package #:ploy/fixup-macro-shadowing)
 
 (defgeneric make-shadowed-idents-eq (substitutions expr))
 

@@ -1,28 +1,28 @@
-(uiop:define-package ploy/prologue
-  (:mix-reexport cl iterate)
-  (:import-from gefjon-utils
-                define-class define-special
-                typedec func void list-of tuple hash-map
-                shallow-copy with-slot-accessors
-                ~> pipe)
-  (:import-from alexandria
-                curry rcurry if-let ensure-gethash make-gensym symbolicate alist-hash-table)
+(uiop:define-package #:ploy/prologue
+  (:mix-reexport #:cl #:iterate)
+  (:import-from #:gefjon-utils
+                #:define-class #:define-special
+                #:typedec #:func #:void #:list-of #:tuple #:hash-map
+                #:shallow-copy #:with-slot-accessors
+                #:~> #:pipe)
+  (:import-from #:alexandria
+                #:curry #:rcurry #:if-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table)
   (:export
-   name unique-name
+   #:name #:unique-name
 
-   gensymify
+   #:gensymify
 
-   *literal-classes* literal
+   #:*literal-classes* #:literal
 
    ;;; reexports
    ;; gefjon-utils
-   define-class define-special
-   typedec func void list-of tuple hash-map
-   shallow-copy with-slot-accessors
-   ~> pipe
+   #:define-class #:define-special
+   #:typedec #:func #:void #:list-of #:tuple #:hash-map
+   #:shallow-copy #:with-slot-accessors
+   #:~> #:pipe
    ;; alexandria
-   curry rcurry if-let ensure-gethash make-gensym symbolicate alist-hash-table))
-(in-package ploy/prologue)
+   #:curry #:rcurry #:if-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table))
+(in-package #:ploy/prologue)
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun ploy-user-symbol-p (symbol)

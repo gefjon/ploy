@@ -1,9 +1,9 @@
-(uiop:define-package ploy/ir1-to-sexpr
-  (:import-from ploy/ir1-expr)
-  (:use ploy/prologue)
-  (:import-from ploy/builtins *builtin-names*)
-  (:export output-program))
-(in-package ploy/ir1-to-sexpr)
+(uiop:define-package #:ploy/ir1-to-sexpr
+  (:import-from #:ploy/ir1-expr)
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/builtins #:*builtin-names*)
+  (:export #:output-program))
+(in-package #:ploy/ir1-to-sexpr)
 
 (define-special *ident-symbols* (hash-map ir1:ident symbol))
 

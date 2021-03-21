@@ -1,13 +1,13 @@
-(uiop:define-package ploy/builtins
-  (:use ploy/prologue)
-  (:import-from ploy/ploy-user)
-  (:import-from ploy/ir1-expr)
-  (:shadow +)
+(uiop:define-package #:ploy/builtins
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/ploy-user)
+  (:import-from #:ploy/ir1-expr)
+  (:shadow #:+)
   (:export
-   *builtin-names*
+   #:*builtin-names*
    
-   *exit* exit
-   *+* +))
+   #:*exit* #:exit
+   #:*+* #:+))
 (in-package ploy/builtins)
 
 (defparameter *exit* (make-instance 'ir1:ident

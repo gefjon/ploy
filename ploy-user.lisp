@@ -1,11 +1,11 @@
-(uiop:define-package ploy/ploy-user
+(uiop:define-package #:ploy/ploy-user
   (:use)
-  (:nicknames ploy-user)
+  (:nicknames #:ploy-user)
   (:export
-   |let| |scope| |fn| |macro| |macrolet|
+   #:|let| #:|scope| #:|fn| #:|macro| #:|macrolet|
 
-   |exit|
+   #:|exit|
 
-   |backquote| |comma| |quote|
+   #:|backquote| #:|comma| #:|quote|
 
-   +))
+   #:+))

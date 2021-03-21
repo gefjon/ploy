@@ -1,9 +1,9 @@
-(uiop:define-package ploy/macroexpand
-  (:use ploy/prologue)
-  (:shadow macroexpand macroexpand-1 eval)
-  (:import-from ploy/ir1-expr)
-  (:export macroexpand-program))
-(in-package ploy/macroexpand)
+(uiop:define-package #:ploy/macroexpand
+  (:use #:ploy/prologue)
+  (:shadow #:macroexpand #:macroexpand-1 #:eval)
+  (:import-from #:ploy/ir1-expr)
+  (:export #:macroexpand-program))
+(in-package #:ploy/macroexpand)
 
 (defgeneric macroexpand-walker (macros expr))
 

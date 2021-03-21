@@ -1,8 +1,8 @@
-(uiop:define-package ploy/a-normal
-  (:use ploy/prologue)
-  (:import-from ploy/ir1-expr)
-  (:export a-normal-transform))
-(in-package ploy/a-normal)
+(uiop:define-package #:ploy/a-normal
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/ir1-expr)
+  (:export #:a-normal-transform))
+(in-package #:ploy/a-normal)
 
 (defgeneric a-normal-transform (expr))
 

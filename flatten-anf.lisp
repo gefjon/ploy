@@ -6,11 +6,11 @@
 ;; let bar = baz
 ;;   in let foo = froz baz
 ;;     in froz foo
-(uiop:define-package ploy/flatten-a-normal
-  (:use ploy/prologue)
-  (:import-from ploy/ir1-expr)
-  (:export flatten-anf))
-(in-package ploy/flatten-a-normal)
+(uiop:define-package #:ploy/flatten-anf
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/ir1-expr)
+  (:export #:flatten-anf))
+(in-package #:ploy/flatten-anf)
 
 (defgeneric flatten-anf (expr))
 

@@ -1,23 +1,23 @@
-(uiop:define-package ploy/ir1-expr
-  (:use ploy/prologue)
-  (:nicknames ir1)
-  (:shadow prog2 let quote)
-  (:import-from closer-mop
-                class-slots slot-definition-type slot-value-using-class)
+(uiop:define-package #:ploy/ir1-expr
+  (:use #:ploy/prologue)
+  (:nicknames #:ir1)
+  (:shadow #:prog2 #:let #:quote)
+  (:import-from #:closer-mop
+                #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
-   map-nested-exprs
+   #:map-nested-exprs
 
-   expr
-   prog2 discard ret
-   ident name
-   let binding initform body
-   fn arglist body
-   quote lit
-   call operator args
-   macro arglist body
-   backquote term
-   comma term))
-(in-package ploy/ir1-expr)
+   #:expr
+   #:prog2 #:discard #:ret
+   #:ident #:name
+   #:let #:binding #:initform #:body
+   #:fn #:arglist #:body
+   #:quote #:lit
+   #:call #:operator #:args
+   #:macro #:arglist #:body
+   #:backquote #:term
+   #:comma #:term))
+(in-package #:ploy/ir1-expr)
 
 (defgeneric map-nested-exprs (function expr))
 

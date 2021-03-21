@@ -1,18 +1,18 @@
 ;;; transform s-expressions into CLOS `expr' objects; make explicit the construction, nesting and access of scopes.
-(uiop:define-package ploy/sexpr-to-ir1
-  (:use ploy/prologue)
-  (:import-from ploy/ir1-expr)
-  (:import-from ploy/ploy-user)
-  (:import-from ploy/builtins *builtin-names*)
+(uiop:define-package #:ploy/sexpr-to-ir1
+  (:use #:ploy/prologue)
+  (:import-from #:ploy/ir1-expr)
+  (:import-from #:ploy/ploy-user)
+  (:import-from #:ploy/builtins #:*builtin-names*)
   (:export
-   parse-program
+   #:parse-program
 
-   scope name contents parent
-   *global-scope*))
-(in-package ploy/sexpr-to-ir1)
+   #:scope #:name #:contents #:parent
+   #:*global-scope*))
+(in-package #:ploy/sexpr-to-ir1)
 
 (define-class scope
-    ((name unique-name)
+    ((name (or unique-name (eql :global-scope)))
      (contents (hash-map name ident)
                :initform (make-hash-table :test 'eq))
      (parent (or null scope))))
@@ -30,7 +30,7 @@
                        :name name)))
 
 (defparameter *global-scope*
-  (let* ((scope (make-instance 'scope :name 'global-scope :parent nil)))
+  (let* ((scope (make-instance 'scope :name :global-scope :parent nil)))
     (iter (for (binding) in *builtin-names*)
       (setf (gethash (ir1:name binding) (contents scope)) binding))
     scope))
