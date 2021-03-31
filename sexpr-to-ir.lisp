@@ -1,14 +1,14 @@
 ;;; transform s-expressions into CLOS `expr' objects; make explicit the construction, nesting and access of scopes.
-(uiop:define-package #:ploy/sexpr-to-ir1
+(uiop:define-package #:ploy/sexpr-to-ir
   (:use #:ploy/prologue)
-  (:import-from #:ploy/ir1-expr)
+  (:import-from #:ploy/ir)
   (:import-from #:ploy/ploy-user)
   (:import-from #:ploy/builtins #:*builtin-names*)
   (:export
    #:parse-program
 
    #:scope #:name #:contents #:parent))
-(in-package #:ploy/sexpr-to-ir1)
+(in-package #:ploy/sexpr-to-ir)
 
 (define-class scope
     ((name (or unique-name (eql :global-scope)))
@@ -16,12 +16,12 @@
                :initform (make-hash-table :test 'eq))
      (parent (or null scope))))
 
-(typedec #'make-ident (func (name scope) ir1:ident))
+(typedec #'make-ident (func (name scope) ir:ident))
 (defun make-ident (name scope)
   (setf (gethash name (contents scope))
-        (ir1:gen-ident name)))
+        (ir:gen-ident name)))
 
-(typedec #'find-ident (func (name scope) ir1:ident))
+(typedec #'find-ident (func (name scope) ir:ident))
 (defun find-ident (name scope)
   (or (gethash name (contents scope))
       (and (parent scope) (find-ident name (parent scope)))
@@ -30,73 +30,73 @@
 (defun global-scope ()
   (let* ((scope (make-instance 'scope :name :global-scope :parent nil)))
     (iter (for binding in *builtin-names*)
-      (setf (gethash (ir1:name binding) (contents scope)) binding))
+      (setf (gethash (ir:name binding) (contents scope)) binding))
     scope))
 
-(typedec #'make-let (func (scope symbol ir1:expr (func (scope) ir1:expr)) ir1:let))
+(typedec #'make-let (func (scope symbol ir:expr (func (scope) ir:expr)) ir:let))
 (defun make-let (enclosing-scope name initform body-ctor)
   (let* ((new-scope (make-instance 'scope
                                    :parent enclosing-scope
                                    :name (gensymify 'let name)))
          (binding (make-ident name new-scope)))
-    (make-instance 'ir1:let
+    (make-instance 'ir:let
                    :binding binding
                    :initform initform
                    :body (funcall body-ctor new-scope))))
 
-(defgeneric parse-ir1 (current-scope remaining-body form))
+(defgeneric parse-ir (current-scope remaining-body form))
 
-(defgeneric parse-ir1-form (current-scope remaining-body head &rest tail))
+(defgeneric parse-ir-form (current-scope remaining-body head &rest tail))
 
-(defmethod parse-ir1 ((scope scope) (remaining-body list) (form cons))
-  (apply #'parse-ir1-form scope remaining-body form))
+(defmethod parse-ir ((scope scope) (remaining-body list) (form cons))
+  (apply #'parse-ir-form scope remaining-body form))
 
 (defmacro define-literals ()
   (cons 'cl:progn
         (iter (for literal in *literal-classes*)
-          (collect `(defmethod parse-ir1 ((scope scope) (remaining-body null) (literal ,literal))
+          (collect `(defmethod parse-ir ((scope scope) (remaining-body null) (literal ,literal))
                       ,(format nil "Treat a ~a as a literal, returning it" literal)
                       (declare (ignorable scope remaining-body))
-                      (make-instance 'ir1:quote :lit literal))))))
+                      (make-instance 'ir:quote :lit literal))))))
 (define-literals)
 
-(defmethod parse-ir1 ((scope scope) (remaining-body list) (form symbol))
+(defmethod parse-ir ((scope scope) (remaining-body list) (form symbol))
   (assert (not remaining-body) ()
           "discarding read from variable ~a" form)
   (check-type form name)
   (find-ident form scope))
 
-(typedec #'maybe-prog2 (func (scope ir1:expr list) ir1:expr))
+(typedec #'maybe-prog2 (func (scope ir:expr list) ir:expr))
 (defun maybe-prog2 (scope first-expr remaining-body)
   (if remaining-body
-      (make-instance 'ir1:prog2
+      (make-instance 'ir:prog2
                      :discard first-expr
-                     :ret (parse-ir1 scope (rest remaining-body) (first remaining-body)))
+                     :ret (parse-ir scope (rest remaining-body) (first remaining-body)))
       first-expr))
 
-(defmethod parse-ir1-form ((scope scope) (remaining-body list) function &rest arglist)
+(defmethod parse-ir-form ((scope scope) (remaining-body list) function &rest arglist)
   "Fallthrough: compile as a function call"
-  (let* ((funcall (make-instance 'ir1:call
-                                 :operator (parse-ir1 scope nil function)
-                                 :args (mapcar (curry #'parse-ir1 scope nil) arglist))))
+  (let* ((funcall (make-instance 'ir:call
+                                 :operator (parse-ir scope nil function)
+                                 :args (mapcar (curry #'parse-ir scope nil) arglist))))
     (maybe-prog2 scope funcall remaining-body)))
 
 (defmacro define-expr ((head &rest arglist) (scope remaining-body) &body body)
-  `(defmethod parse-ir1-form
+  `(defmethod parse-ir-form
        ((,scope scope) (,remaining-body list) (head (eql ',head)) &rest tail)
      (destructuring-bind ,arglist tail
        ,@body)))
 
-(typedec #'scoped-lambda (func (scope symbol (list-of symbol) list &optional symbol) ir1:expr))
-(defun scoped-lambda (enclosing-scope fn-name arglist body &optional (class 'ir1:fn))
+(typedec #'scoped-lambda (func (scope symbol (list-of symbol) list &optional symbol) ir:expr))
+(defun scoped-lambda (enclosing-scope fn-name arglist body &optional (class 'ir:fn))
   (let* ((inner-scope (make-instance 'scope
                                      :name (gensymify class fn-name)
                                      :parent enclosing-scope)))
     (make-instance class
                    :arglist (mapcar (rcurry #'make-ident inner-scope) arglist)
-                   :body (parse-ir1 inner-scope (rest body) (first body)))))
+                   :body (parse-ir inner-scope (rest body) (first body)))))
 
-(typedec #'let-binding-name-initform (func (scope (or symbol (list-of symbol)) list) (values symbol ir1:expr)))
+(typedec #'let-binding-name-initform (func (scope (or symbol (list-of symbol)) list) (values symbol ir:expr)))
 (defun let-binding-name-initform (enclosing-scope name-or-function value-or-body)
   (etypecase name-or-function
     (list (let* ((name (first name-or-function))
@@ -105,7 +105,7 @@
     (symbol (assert (= (length value-or-body) 1) ()
                     "Malformed non-function let ~a should have exactly one value form but found ~a"
                     name-or-function value-or-body)
-     (values name-or-function (parse-ir1 enclosing-scope nil (first value-or-body))))))
+     (values name-or-function (parse-ir enclosing-scope nil (first value-or-body))))))
 
 (define-expr (ploy-user:|let| name-or-function &body value-or-body) (enclosing-scope remaining-body)
   (assert remaining-body ()
@@ -113,7 +113,7 @@
   (multiple-value-bind (name initform)
       (let-binding-name-initform enclosing-scope name-or-function value-or-body)
     (make-let enclosing-scope name initform
-                  (lambda (inner-scope) (parse-ir1 inner-scope (rest remaining-body) (first remaining-body))))))
+                  (lambda (inner-scope) (parse-ir inner-scope (rest remaining-body) (first remaining-body))))))
 
 (define-expr (ploy-user:|fn| arglist &body body) (enclosing-scope remaining-body)
   (assert (not remaining-body) ()
@@ -124,39 +124,39 @@
   (let* ((inner-scope (make-instance 'scope
                                      :name (gensymify 'scope)
                                      :parent enclosing-scope)))
-    (setf (ir1:body inner-scope)
-          (parse-ir1 inner-scope (rest body) (first body)))
+    (setf (ir:body inner-scope)
+          (parse-ir inner-scope (rest body) (first body)))
     (maybe-prog2 enclosing-scope inner-scope remaining-body)))
 
 (define-expr (ploy-user:|macro| arglist &body body) (enclosing-scope remaining-body)
   (assert (not remaining-body) ()
           "macro unused: ~a" `(ploy-user:|macro| ,arglist ,@body))
-  (scoped-lambda enclosing-scope nil arglist body 'ir1:macro))
+  (scoped-lambda enclosing-scope nil arglist body 'ir:macro))
 
 (define-expr (ploy-user:|macrolet| (name &rest arglist) &body body) (enclosing-scope remaining-body)
-  (make-let enclosing-scope name (scoped-lambda enclosing-scope name arglist body 'ir1:macro)
+  (make-let enclosing-scope name (scoped-lambda enclosing-scope name arglist body 'ir:macro)
                 (lambda (inner-scope)
-                  (parse-ir1 inner-scope (rest remaining-body) (first remaining-body)))))
+                  (parse-ir inner-scope (rest remaining-body) (first remaining-body)))))
 
 (define-expr (ploy-user:|backquote| term) (enclosing-scope remaining-body)
   (assert (not remaining-body) ()
           "backquote result unused: ~a" `(ploy-user:|backquote| ,term))
-  (make-instance 'ir1:backquote
-                 :term (parse-ir1 enclosing-scope nil term)))
+  (make-instance 'ir:backquote
+                 :term (parse-ir enclosing-scope nil term)))
 
 (define-expr (ploy-user:|comma| term) (enclosing-scope remaining-body)
-  (make-instance 'ir1:comma
-                 :term (parse-ir1 enclosing-scope remaining-body term)))
+  (make-instance 'ir:comma
+                 :term (parse-ir enclosing-scope remaining-body term)))
 
 (define-expr (ploy-user:|quote| term) (enclosing-scope remaining-body)
   (assert (not remaining-body) ()
           "quoted literal unused: ~a" term)
   (if (typep term 'literal)
       ;; avoid double-quoting literals
-      (parse-ir1 enclosing-scope nil term)
+      (parse-ir enclosing-scope nil term)
       (make-instance 'quote
-                     :term (parse-ir1 enclosing-scope nil term))))
+                     :term (parse-ir enclosing-scope nil term))))
 
-(typedec #'parse-program (func (list &optional scope) ir1:expr))
+(typedec #'parse-program (func (list &optional scope) ir:expr))
 (defun parse-program (program &optional (scope (global-scope)))
-  (parse-ir1 scope (rest program) (first program)))
+  (parse-ir scope (rest program) (first program)))

@@ -1,6 +1,6 @@
-(uiop:define-package #:ploy/ir1-expr
+(uiop:define-package #:ploy/ir
   (:use #:ploy/prologue)
-  (:nicknames #:ir1)
+  (:nicknames #:ir)
   (:shadow #:prog2 #:let #:quote)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
@@ -19,7 +19,7 @@
    #:macro #:arglist #:body
    #:backquote #:term
    #:comma #:term))
-(in-package #:ploy/ir1-expr)
+(in-package #:ploy/ir)
 
 (defgeneric map-nested-exprs (function expr))
 
@@ -142,8 +142,8 @@
   (if (typep symbol 'name) symbol
       (values (intern (symbol-name symbol) (find-package '#:ploy-user)))))
 
-(typedec #'gen-ident (func (symbol) ir1:ident))
+(typedec #'gen-ident (func (symbol) ir:ident))
 (defun gen-ident (name)
-  (make-instance 'ir1:ident
+  (make-instance 'ir:ident
                  :name (symbol-to-name name)))
 

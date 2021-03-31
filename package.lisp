@@ -4,18 +4,18 @@
   (:export #:compile-file)
   (:use #:ploy/prologue #:ploy/reader)
   (:import-from #:ploy/builtins #:enclose-in-builtins)
-  (:import-from #:ploy/ir1-expr)
-  (:import-from #:ploy/sexpr-to-ir1 #:parse-program)
+  (:import-from #:ploy/ir)
+  (:import-from #:ploy/sexpr-to-ir #:parse-program)
   (:import-from #:ploy/macroexpand #:macroexpand-program)
   (:import-from #:ploy/fixup-macro-shadowing #:fixup-shadowing-in-program)
   (:import-from #:ploy/a-normal #:a-normal-transform)
   (:import-from #:ploy/flatten-anf #:flatten-anf)
-  (:import-from #:ploy/ir1-to-sexpr #:output-program)
+  (:import-from #:ploy/ir-to-sexpr #:output-program)
   (:import-from #:ploy/cps #:cps-transform-program))
 (in-package #:ploy/package)
 
-(typedec #'ir1-transforms (func (ir1:expr) ir1:expr))
-(defun ir1-transforms (program)
+(typedec #'ir-transforms (func (ir:expr) ir:expr))
+(defun ir-transforms (program)
   (pipe program
     #'macroexpand-program
     #'fixup-shadowing-in-program
@@ -27,7 +27,7 @@
 (defun compile-forms (program)
   (pipe program
     #'parse-program
-    #'ir1-transforms
+    #'ir-transforms
     #'output-program))
 
 (typedec #'emit-compiled-function (func (list) compiled-function))
