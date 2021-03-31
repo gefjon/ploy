@@ -5,26 +5,13 @@
   (:export #:output-program))
 (in-package #:ploy/ir-to-sexpr)
 
-(define-special *ident-symbols* (hash-map ir:ident symbol))
-
 (defgeneric output-expr (expr))
 
-(defun builtin-ident-symbols ()
-  (let* ((table (make-hash-table :test 'eq)))
-    (iter (for ident in *builtin-names*)
-      (setf (gethash ident table)
-            (ir:name ident)))
-    table))
-
 (defun output-program (program)
-  (let* ((*ident-symbols* (builtin-ident-symbols)))
-    (output-expr program)))
-
-(defun ident-symbol (ident)
-  (ensure-gethash ident *ident-symbols* (make-gensym (ir:name ident))))
+  (output-expr program))
 
 (defmethod output-expr ((expr ir:ident))
-  (ident-symbol expr))
+  (ir:name expr))
 
 (defmethod output-expr ((expr ir:let))
   `(let ((,(output-expr (ir:binding expr))

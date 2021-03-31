@@ -31,7 +31,7 @@
   expr)
 
 (defmethod resolve-to-macro ((macros list) (expr ir:ident))
-  (cdr (assoc expr macros)))
+  (cdr (assoc expr macros :test #'ir:same-ident-p)))
 
 (defgeneric eval (bindings expr))
 
@@ -46,7 +46,7 @@
   (error "Cannot eval a macro!"))
 
 (defmethod eval ((bindings list) (expr ir:ident))
-  (if-let ((cell (assoc expr bindings)))
+  (if-let ((cell (assoc expr bindings :test #'ir:same-ident-p)))
     (cdr cell)
     (error "unbound identifier ~a" expr)))
 

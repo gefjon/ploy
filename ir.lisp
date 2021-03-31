@@ -27,27 +27,13 @@
     ())
 
 (defmethod map-nested-exprs ((function function) (expr expr))
-  (iter (with changes)
-    (with class = (class-of expr))
-    (with new = (shallow-copy expr))
-    (for slot in (class-slots (class-of expr)))
-    (for slot-type = (slot-definition-type slot))
-    (for old-value = (slot-value-using-class class expr slot))
-    (for new-value =
-         (cond ((subtypep slot-type 'expr)
-                (funcall function old-value))
-               ((subtypep slot-type 'sequence)
-                (map slot-type
-                     (lambda (item) (if (typep item 'expr)
-                                        (funcall function item)
-                                        item))
-                     old-value))))
-    (when new-value
-      (setf (slot-value-using-class class new slot)
-            new-value)
-      (unless (or changes (eq new-value old-value))
-        (setf changes t)))
-    (finally (return (if changes new expr)))))
+  (labels ((visit (subexpr)
+             (etypecase subexpr
+               (expr (funcall function subexpr))
+               (list (mapcar #'visit subexpr))
+               (sequence (map (type-of subexpr) #'visit subexpr))
+               (t subexpr))))
+    (map-slots #'visit expr)))
 
 (define-class prog2
     ((discard expr)
@@ -55,7 +41,7 @@
   :superclasses (expr))
 
 (define-class ident
-    ((name name))
+    ((name symbol))
   :superclasses (expr))
 
 (define-class let
@@ -137,13 +123,10 @@
       (write-string "-> " stream)
       (write (body fn) :stream stream))))
 
-(typedec #'symbol-to-name (func (symbol) name))
-(defun symbol-to-name (symbol)
-  (if (typep symbol 'name) symbol
-      (values (intern (symbol-name symbol) (find-package '#:ploy-user)))))
-
 (typedec #'gen-ident (func (symbol) ir:ident))
 (defun gen-ident (name)
   (make-instance 'ir:ident
-                 :name (symbol-to-name name)))
+                 :name (make-gensym name)))
 
+(defun same-ident-p (lhs rhs)
+  (eq (ir:name lhs) (ir:name rhs)))
