@@ -1,13 +1,19 @@
 (uiop:define-package #:ploy/ir
   (:use #:ploy/prologue)
   (:nicknames #:ir)
-  (:shadow #:prog2 #:let #:quote)
+  (:shadow #:prog2 #:let #:quote #:type)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
-   #:map-nested-exprs
+   #:map-nested-exprs #:map-nested-types
 
-   #:gen-ident
+   #:gen-ident #:same-ident-p
+
+   #:type
+   #:type-variable #:name
+   #:primitive-type #:name
+   #:fn-type #:args #:ret
+   #:forall-type #:args #:body
 
    #:expr
    #:prog2 #:discard #:ret
@@ -23,13 +29,46 @@
 
 (defgeneric map-nested-exprs (function expr))
 
-(define-class expr
+(defgeneric map-nested-types (function type))
+
+(define-class type
     ())
+
+(define-class type-variable
+    ((name symbol))
+  :superclasses (type))
+
+(define-class primitive-type
+    ((name name))
+  :superclasses (type))
+
+(define-class fn-type
+    ((args (list-of type))
+     (ret type))
+  :superclasses (type))
+
+(define-class forall-type
+    ((args (list-of type-variable))
+     (body type))
+  :superclasses (type))
+
+(define-class expr
+    ((type type)))
 
 (defmethod map-nested-exprs ((function function) (expr expr))
   (labels ((visit (subexpr)
              (etypecase subexpr
                (expr (funcall function subexpr))
+               (list (mapcar #'visit subexpr))
+               (sequence (map (type-of subexpr) #'visit subexpr))
+               (t subexpr))))
+    (map-slots #'visit expr)))
+
+(defmethod map-nested-types ((function function) (expr standard-object))
+  (labels ((visit (subexpr)
+             (etypecase subexpr
+               (type (funcall function subexpr))
+               (expr (map-nested-types function subexpr))
                (list (mapcar #'visit subexpr))
                (sequence (map (type-of subexpr) #'visit subexpr))
                (t subexpr))))
