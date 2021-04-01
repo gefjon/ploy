@@ -2,7 +2,7 @@
   (:use)
   (:nicknames #:ploy-user)
   (:export
-   #:|let| #:|scope| #:|fn| #:|macro| #:|macrolet|
+   #:|let| #:|scope| #:|fn| #:|macro| #:|macrolet| #:|if|
 
    #:|exit|
 

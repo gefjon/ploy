@@ -1,7 +1,7 @@
 (uiop:define-package #:ploy/ir
   (:use #:ploy/prologue)
   (:nicknames #:ir)
-  (:shadow #:prog2 #:let #:quote #:type)
+  (:shadow #:prog2 #:let #:quote #:type #:if #:else)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
@@ -16,6 +16,7 @@
    #:forall-type #:args #:body
 
    #:expr
+   #:if #:predicate #:then #:else
    #:prog2 #:discard #:ret
    #:ident #:name
    #:let #:binding #:initform #:body
@@ -73,6 +74,12 @@
                (sequence (map (type-of subexpr) #'visit subexpr))
                (t subexpr))))
     (map-slots #'visit expr)))
+
+(define-class if
+    ((predicate expr)
+     (then expr)
+     (else expr))
+  :superclasses (expr))
 
 (define-class prog2
     ((discard expr)

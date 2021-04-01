@@ -35,6 +35,23 @@
 
 (defgeneric eval (bindings expr))
 
+(defgeneric truthyp (thing))
+
+(defmethod truthyp ((thing ir:quote))
+  (truthyp (ir:lit thing)))
+
+(defmethod truthyp ((thing symbol))
+  (ecase thing
+    ((nil ploy-user:|false|) nil)
+    ((t ploy-user:|true|) t)))
+
+(defmethod eval ((bindings list) (expr ir:if))
+  (with-slot-accessors (ir:predicate ir:then ir:else) expr
+    (eval bindings
+          (if (truthyp (eval bindings ir:predicate))
+              ir:then
+              ir:else))))
+
 (defmethod eval ((bindings list) (expr ir:let))
   (with-slot-accessors (ir:initform ir:binding ir:body) expr
     (let* ((val (eval bindings ir:initform))
