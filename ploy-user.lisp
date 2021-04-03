@@ -8,4 +8,8 @@
 
    #:|backquote| #:|comma| #:|quote|
 
-   #:+))
+   #:+
+
+   #:|fixnum| #:|boolean| #:|never|
+
+   #:|true| #:|false|))

@@ -15,7 +15,7 @@
    #:fn-type #:args #:ret
    #:forall-type #:args #:body
 
-   #:expr
+   #:expr #:type #:type-boundp
    #:if #:predicate #:then #:else
    #:prog2 #:discard #:ret
    #:ident #:name
@@ -36,7 +36,7 @@
     ())
 
 (define-class type-variable
-    ((name symbol))
+    ((name symbol :initform (error "unbound name")))
   :superclasses (type))
 
 (define-class primitive-type
@@ -61,7 +61,6 @@
              (etypecase subexpr
                (expr (funcall function subexpr))
                (list (mapcar #'visit subexpr))
-               (sequence (map (type-of subexpr) #'visit subexpr))
                (t subexpr))))
     (map-slots #'visit expr)))
 
@@ -71,7 +70,6 @@
                (type (funcall function subexpr))
                (expr (map-nested-types function subexpr))
                (list (mapcar #'visit subexpr))
-               (sequence (map (type-of subexpr) #'visit subexpr))
                (t subexpr))))
     (map-slots #'visit expr)))
 
@@ -174,5 +172,7 @@
   (make-instance 'ir:ident
                  :name (make-gensym name)))
 
+(typedec #'same-ident-p (func (t t) boolean))
 (defun same-ident-p (lhs rhs)
-  (eq (ir:name lhs) (ir:name rhs)))
+  (and (eq (class-of lhs) (class-of rhs))
+       (eq (ir:name lhs) (ir:name rhs))))

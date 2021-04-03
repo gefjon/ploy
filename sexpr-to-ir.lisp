@@ -3,34 +3,34 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/ploy-user)
-  (:import-from #:ploy/builtins #:*builtin-names*)
+  (:import-from #:ploy/builtins #:*builtin-terms* #:*builtin-types*)
   (:export
-   #:parse-program
+   #:parse-program #:parse-type #:global-scope
 
    #:scope #:name #:contents #:parent))
 (in-package #:ploy/sexpr-to-ir)
 
 (define-class scope
     ((name (or unique-name (eql :global-scope)))
-     (contents (hash-map name ident)
-               :initform (make-hash-table :test 'eq))
+     (terms (hash-map name ir:ident)
+            :initform (make-hash-table :test 'eq))
      (parent (or null scope))))
 
 (typedec #'make-ident (func (name scope) ir:ident))
 (defun make-ident (name scope)
-  (setf (gethash name (contents scope))
+  (setf (gethash name (terms scope))
         (ir:gen-ident name)))
 
 (typedec #'find-ident (func (name scope) ir:ident))
 (defun find-ident (name scope)
-  (or (gethash name (contents scope))
+  (or (gethash name (terms scope))
       (and (parent scope) (find-ident name (parent scope)))
       (make-ident name scope)))
 
 (defun global-scope ()
   (let* ((scope (make-instance 'scope :name :global-scope :parent nil)))
-    (iter (for binding in *builtin-names*)
-      (setf (gethash (ir:name binding) (contents scope)) binding))
+    (iter (for (binding . nil) in *builtin-terms*)
+      (setf (gethash (ir:name binding) (terms scope)) binding))
     scope))
 
 (typedec #'make-let (func (scope symbol ir:expr (func (scope) ir:expr)) ir:let))

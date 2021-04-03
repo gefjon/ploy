@@ -1,7 +1,6 @@
 (uiop:define-package #:ploy/ir-to-sexpr
   (:import-from #:ploy/ir)
   (:use #:ploy/prologue)
-  (:import-from #:ploy/builtins #:*builtin-names*)
   (:export #:output-program))
 (in-package #:ploy/ir-to-sexpr)
 

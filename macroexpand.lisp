@@ -115,7 +115,8 @@
 
 (typedec #'macroexpand-1 (func (ir:macro (list-of ir:expr)) ir:expr))
 (defun macroexpand-1 (macro args)
-  (assert (= (length (ir:arglist macro)) (length args)))
+  (assert (= (length (the (list-of ir:ident) (ir:arglist macro)))
+             (length args)))
   (eval (mapcar #'cons (ir:arglist macro) args)
         (ir:body macro)))
 

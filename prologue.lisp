@@ -5,9 +5,10 @@
                 #:typedec #:func #:void #:list-of #:tuple #:hash-map
                 #:shallow-copy #:with-slot-accessors
                 #:~> #:pipe
-                #:map-slots)
+                #:map-slots
+                #:subtypep*)
   (:import-from #:alexandria
-                #:curry #:rcurry #:if-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table)
+                #:curry #:rcurry #:if-let #:when-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table)
   (:export
    #:name #:unique-name
 
@@ -22,8 +23,9 @@
    #:shallow-copy #:with-slot-accessors
    #:~> #:pipe
    #:map-slots
+   #:subtypep*
    ;; alexandria
-   #:curry #:rcurry #:if-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table))
+   #:curry #:rcurry #:if-let #:when-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table))
 (in-package #:ploy/prologue)
 
 (eval-when (:compile-toplevel :load-toplevel)

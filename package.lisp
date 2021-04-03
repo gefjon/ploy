@@ -11,7 +11,8 @@
   (:import-from #:ploy/a-normal #:a-normal-transform)
   (:import-from #:ploy/flatten-anf #:flatten-anf)
   (:import-from #:ploy/ir-to-sexpr #:output-program)
-  (:import-from #:ploy/cps #:cps-transform-program))
+  (:import-from #:ploy/cps #:cps-transform-program)
+  (:import-from #:ploy/type-infer #:type-infer))
 (in-package #:ploy/package)
 
 (typedec #'ir-transforms (func (ir:expr) ir:expr))
@@ -21,7 +22,8 @@
     #'fixup-shadowing-in-program
     #'a-normal-transform
     #'flatten-anf
-    #'cps-transform-program))
+    ;; #'cps-transform-program
+    #'type-infer))
 
 (typedec #'compile-forms (func (list) list))
 (defun compile-forms (program)
