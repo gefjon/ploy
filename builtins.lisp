@@ -64,13 +64,10 @@
          ,body)
      (ploy-exit (e) (values-list (return-values e)))))
 
-(typedec #'find-builtin-fn (func (name) ir:ident))
-(defun find-builtin-fn (name)
-  (or (find name *builtin-fns* :key #'ir:name :test #'eq)
-      (error "unknown builtin fn ~a" name)))
-
-
-
+(typedec #'find-builtin-term (func (name) ir:ident))
+(defun find-builtin-term (name)
+  (car (or (find name *builtin-terms* :key (~> #'car #'ir:name) :test #'eq)
+           (error "unknown builtin fn ~a" name))))
 
 (typedec #'find-builtin-type (func (name) ir:type))
 (defun find-builtin-type (name)
