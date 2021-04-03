@@ -122,7 +122,7 @@
   :superclasses (expr))
 
 (defmethod print-object ((ident ident) stream)
-  (print-unreadable-object (ident stream :type nil :identity t)
+  (print-unreadable-object (ident stream :type nil :identity nil)
     (write-string (string-downcase (symbol-name (name ident)))
                   stream)))
 
