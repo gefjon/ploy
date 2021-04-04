@@ -6,7 +6,7 @@
   (:export #:ploy-read #:ploy-read-file))
 (in-package #:ploy/reader)
 
-(typedec #'reader-fn (func (name) (func (stream character) list)))
+(typedec #'reader-fn (func (symbol) (func (stream character) list)))
 (defun reader-fn (symbol)
   (lambda (stream char)
     (declare (ignore char))

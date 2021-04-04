@@ -85,13 +85,18 @@
 
 (define-special *substitutions* (hash-map symbol ir:type))
 
+(defun find-substitution (type)
+  (when (typep type 'ir:type-variable)
+    (values (gethash (ir:name type) *substitutions*))))
+
 (typedec #'add-substitution (func (ir:type-variable ir:type) void))
-(defun add-substitution (old new &aux (name (ir:name old)))
-  (unless (ir:same-ident-p old new)
-    (when-let ((previous-substitution (gethash name *substitutions*)))
-      (when (typep previous-substitution 'ir:type-variable)
-        (add-substitution previous-substitution new)))
-    (setf (gethash name *substitutions*) new))
+(defun add-substitution (old new)
+  (when (ir:same-ident-p old new)
+    (return-from add-substitution (values)))
+  (if-let ((already-substituded (find-substitution old)))
+    (solve-eq-constraint already-substituded new)
+    (let* ((better-new (apply-substitutions new)))
+      (setf (gethash (ir:name old) *substitutions*) better-new)))
   (values))
 
 (defgeneric solve-constraint (constraint))
@@ -134,7 +139,7 @@
   (ir:map-nested-types #'apply-substitutions old))
 
 (defun type-infer (expr)
-  (let* ((*substitutions* (make-hash-table :test 'eq))
+  (let* (;; (*substitutions* (make-hash-table :test 'eq))
          (typed (annotate-types expr))
          (constraints (collect-constraints typed)))
     (mapc #'solve-constraint constraints)

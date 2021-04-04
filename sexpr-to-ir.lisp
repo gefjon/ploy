@@ -11,17 +11,17 @@
 (in-package #:ploy/sexpr-to-ir)
 
 (define-class scope
-    ((name (or unique-name (eql :global-scope)))
-     (terms (hash-map name ir:ident)
+    ((name symbol)
+     (terms (hash-map symbol ir:ident)
             :initform (make-hash-table :test 'eq))
      (parent (or null scope))))
 
-(typedec #'make-ident (func (name scope) ir:ident))
+(typedec #'make-ident (func (symbol scope) ir:ident))
 (defun make-ident (name scope)
   (setf (gethash name (terms scope))
         (ir:gen-ident name)))
 
-(typedec #'find-ident (func (name scope) ir:ident))
+(typedec #'find-ident (func (symbol scope) ir:ident))
 (defun find-ident (name scope)
   (or (gethash name (terms scope))
       (and (parent scope) (find-ident name (parent scope)))
@@ -63,7 +63,7 @@
 (defmethod parse-ir ((scope scope) (remaining-body list) (form symbol))
   (assert (not remaining-body) ()
           "discarding read from variable ~a" form)
-  (check-type form name)
+  (check-type form symbol)
   (find-ident form scope))
 
 (typedec #'maybe-prog2 (func (scope ir:expr list) ir:expr))

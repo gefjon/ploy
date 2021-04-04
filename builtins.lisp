@@ -54,22 +54,22 @@
                  (declare (fixnum lhs rhs))
                  (the fixnum (+ lhs rhs)))))
 
-(defun builtin-let-binding (ident &aux (name (ir:name ident)))
-  `(,name #',name))
+(defun builtin-let-binding (ident)
+  `(,(car ident) ,(cdr ident)))
 
 (defun enclose-in-builtins (body)
   `(handler-case
-       (let ,(mapcar #'builtin-let-binding *builtin-fns*)
-         (declare (ignorable ,@(mapcar #'ir:name *builtin-fns*)))
+       (let ,(mapcar #'builtin-let-binding *builtin-terms*)
+         (declare (ignorable ,@(mapcar (~> #'car #'ir:name) *builtin-terms*)))
          ,body)
      (ploy-exit (e) (values-list (return-values e)))))
 
-(typedec #'find-builtin-term (func (name) ir:ident))
+(typedec #'find-builtin-term (func (symbol) ir:ident))
 (defun find-builtin-term (name)
   (car (or (find name *builtin-terms* :key (~> #'car #'ir:name) :test #'eq)
            (error "unknown builtin fn ~a" name))))
 
-(typedec #'find-builtin-type (func (name) ir:type))
+(typedec #'find-builtin-type (func (symbol) ir:type))
 (defun find-builtin-type (name)
   (or (find name *builtin-types* :key #'ir:name :test #'eq)
       (error "unknown builtin type ~a" name)))

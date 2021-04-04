@@ -28,20 +28,29 @@
    #:comma #:term))
 (in-package #:ploy/ir)
 
+;;; visitor interfaces
+
 (defgeneric map-nested-exprs (function expr))
 
 (defgeneric map-nested-types (function type))
 
-(define-class type
-    ())
+;;; abstract classes
 
-(define-class type-variable
-    ((name symbol :initform (error "unbound name")))
-  :superclasses (type))
+(define-class type ())
 
-(define-class primitive-type
-    ((name name))
-  :superclasses (type))
+(define-class expr
+    ((type type)))
+
+(define-class name
+  ((name symbol :initform (error "unbound name"))))
+
+;;; type variants
+
+(define-class type-variable ()
+  :superclasses (type name))
+
+(define-class primitive-type ()
+  :superclasses (type name))
 
 (define-class fn-type
     ((args (list-of type))
@@ -53,8 +62,7 @@
      (body type))
   :superclasses (type))
 
-(define-class expr
-    ((type type)))
+;;; visitor methods
 
 (defmethod map-nested-exprs ((function function) (expr expr))
   (labels ((visit (subexpr)
@@ -73,6 +81,8 @@
                (t subexpr))))
     (map-slots #'visit expr)))
 
+;;; expr variants
+
 (define-class if
     ((predicate expr)
      (then expr)
@@ -84,9 +94,8 @@
      (ret expr))
   :superclasses (expr))
 
-(define-class ident
-    ((name symbol))
-  :superclasses (expr))
+(define-class ident ()
+  :superclasses (expr name))
 
 (define-class let
     ((binding ident)
@@ -121,10 +130,28 @@
     ((term expr))
   :superclasses (expr))
 
-(defmethod print-object ((ident ident) stream)
-  (print-unreadable-object (ident stream :type nil :identity nil)
-    (write-string (string-downcase (symbol-name (name ident)))
+;;; print-object methods
+
+(defmethod print-object ((name name) stream)
+  (print-unreadable-object (name stream :type nil :identity nil)
+    (write-string (symbol-name (name name))
                   stream)))
+
+(defmethod print-object ((fn fn-type) stream)
+  (print-unreadable-object (fn stream :type nil :identity nil)
+    (write-string "fn " stream)
+    (pprint-logical-block (stream nil)
+      (write-char #\( stream)
+      (pprint-logical-block (stream nil)
+        (iter (for arg in (args fn))
+          (unless (first-time-p)
+            (write-char #\space stream)
+            (pprint-newline :fill stream))
+          (write arg :stream stream))
+        (write-char #\) stream))
+      (write-char #\space stream)
+      (pprint-newline :linear stream)
+      (write (ret fn) :stream stream))))
 
 (defmethod print-object ((let let) stream)
   (print-unreadable-object (let stream :type nil :identity nil)
@@ -168,6 +195,8 @@
       (pprint-newline :fill stream)
       (write-string "-> " stream)
       (write (body fn) :stream stream))))
+
+;;; ident-related utilities (some also apply to other names, like type variables)
 
 (typedec #'gen-ident (func (symbol) ir:ident))
 (defun gen-ident (name)

@@ -1,7 +1,7 @@
 (uiop:define-package #:ploy/cps
   (:use #:ploy/prologue)
   (:import-from #:ploy/builtins
-                #:find-builtin-fn)
+                #:find-builtin-term)
   (:import-from #:ploy/ir)
   (:export #:cps-transform-program))
 (in-package #:ploy/cps)
@@ -9,7 +9,7 @@
 (defgeneric cps-transform (expr continuation))
 
 (defun cps-transform-program (program)
-  (cps-transform program (find-builtin-fn 'ploy-user:|exit|)))
+  (cps-transform program (find-builtin-term 'ploy-user:|exit|)))
 
 (defmethod cps-transform ((expr ir:call) (cc ir:ident))
   (shallow-copy expr

@@ -5,16 +5,16 @@
 (in-package #:ploy/parse-type)
 
 (define-class type-scope
-    ((types (hash-map name ir:type)
+    ((types (hash-map symbol ir:type)
             :initform (make-hash-table :test 'eq))
-     (parent (or null scope))))
+     (parent (or null type-scope))))
 
-(typedec #'add-type (func (name ir:type type-scope) ir:type))
+(typedec #'add-type (func (symbol ir:type type-scope) ir:type))
 (defun add-type (name type scope)
   (setf (gethash name (types scope))
         type))
 
-(typedec #'make-type (func (name type-scope &optional (or symbol class)) ir:type))
+(typedec #'make-type (func (symbol type-scope &optional (or symbol class)) ir:type))
 (defun make-type (name scope &optional (class 'ir:type-variable) )
   (assert (subtypep* class 'ir:type))
   (add-type name
@@ -26,7 +26,7 @@
   (make-instance 'type-scope
                  :parent nil))
 
-(typedec #'find-type (func (name type-scope) ir:type))
+(typedec #'find-type (func (symbol type-scope) ir:type))
 (defun find-type (name scope)
   (or (gethash name (types scope))
       (and (parent scope) (find-type name (parent scope)))

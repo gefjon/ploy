@@ -10,8 +10,6 @@
   (:import-from #:alexandria
                 #:curry #:rcurry #:if-let #:when-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table)
   (:export
-   #:name #:unique-name
-
    #:gensymify
 
    #:*literal-classes* #:literal
@@ -37,13 +35,7 @@
     (and (symbolp symbol)
          (not (symbol-package symbol)))))
 
-(deftype name ()
-  '(and symbol (satisfies ploy-user-symbol-p)))
-
-(deftype unique-name ()
-  '(and symbol (satisfies gensym-p)))
-
-(typedec #'gensymify (func (&rest (or symbol string)) unique-name))
+(typedec #'gensymify (func (&rest (or symbol string)) symbol))
 (defun gensymify (&rest stuff)
   (gensym (format nil "~{~a-~}" stuff)))
 
