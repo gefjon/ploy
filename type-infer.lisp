@@ -139,7 +139,7 @@
   (ir:map-nested-types #'apply-substitutions old))
 
 (defun type-infer (expr)
-  (let* (;; (*substitutions* (make-hash-table :test 'eq))
+  (let* ((*substitutions* (make-hash-table :test 'eq))
          (typed (annotate-types expr))
          (constraints (collect-constraints typed)))
     (mapc #'solve-constraint constraints)
