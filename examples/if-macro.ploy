@@ -1,0 +1,6 @@
+;;;; -*- mode:lisp; -*-
+
+(macrolet (if-macro pred then else)
+  (if pred then else))
+
+(+ (if-macro true 1 false) (if-macro false true -1))
