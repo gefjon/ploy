@@ -22,7 +22,10 @@
      ,(output-expr (ir:body expr))))
 
 (defmethod output-expr ((expr ir:quote))
-  (ir:lit expr))
+  (case (ir:lit expr)
+    (ploy-user:|true| t)
+    (ploy-user:|false| nil)
+    (otherwise (ir:lit expr))))
 
 (defmethod output-expr ((expr ir:call))
   `(funcall ,(output-expr (ir:operator expr))

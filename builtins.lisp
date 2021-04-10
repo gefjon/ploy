@@ -1,7 +1,10 @@
 (uiop:define-package #:ploy/builtins
   (:use #:ploy/prologue #:cl)
   (:import-from #:ploy/ploy-user
-                #:|fixnum| #:|fn| #:|never|)
+                #:|fixnum| #:|fn| #:|never| #:|forall|
+                #:|list| #:|cons| #:|nil|)
+  (:import-from #:ploy/literal
+                #:literal #:builtin-type-spec-for-literal)
   (:import-from #:ploy/parse-type
                 #:type-scope #:empty-type-scope #:add-type #:parse-type)
   (:import-from #:ploy/ir)
@@ -9,7 +12,7 @@
    #:*global-type-scope*
    #:enclose-in-builtins
    #:*builtin-terms* #:find-builtin-term
-   #:*builtin-types* #:find-builtin-type))
+   #:*builtin-types* #:parse-builtin-type))
 (in-package #:ploy/builtins)
 
 (defmacro define-builtin-types (builtin-types &body names)
@@ -69,7 +72,10 @@
   (car (or (find name *builtin-terms* :key (~> #'car #'ir:name) :test #'eq)
            (error "unknown builtin fn ~a" name))))
 
-(typedec #'find-builtin-type (func (symbol) ir:type))
-(defun find-builtin-type (name)
-  (or (find name *builtin-types* :key #'ir:name :test #'eq)
-      (error "unknown builtin type ~a" name)))
+(typedec #'parse-builtin-type (func (t) ir:type))
+(defun parse-builtin-type (type)
+  (parse-type *global-type-scope* type))
+
+(typedec #'literal-type (func (literal) ir:type))
+(defun literal-type (lit)
+  (parse-builtin-type (builtin-type-spec-for-literal lit)))

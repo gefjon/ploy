@@ -2,9 +2,9 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/builtins
-                #:find-builtin-type)
-  (:import-from #:ploy/literal
-                #:builtin-type-for-literal))
+                #:parse-builtin-type #:literal-type)
+  (:import-from #:ploy/parse-type
+                #:parse-type))
 (in-package #:ploy/type-infer)
 
 (declaim (optimize (speed 0) (debug 3)))
@@ -53,7 +53,7 @@
 
 (defmethod collect-constraints append ((expr ir:if))
   (list (must-be-eq (ir:type (ir:predicate expr))
-                    (find-builtin-type 'ploy-user:|boolean|))
+                    (parse-builtin-type 'ploy-user:|boolean|))
         (must-be-eq (ir:type (ir:then expr))
                     (ir:type (ir:else expr)))
         (must-be-eq (ir:type expr)
@@ -77,7 +77,7 @@
 
 (defmethod collect-constraints append ((expr ir:quote))
   (list (must-be-eq (ir:type expr)
-                    (builtin-type-for-literal (ir:lit expr)))))
+                    (literal-type (ir:lit expr)))))
 
 (define-special *substitutions* (hash-map symbol ir:type))
 
