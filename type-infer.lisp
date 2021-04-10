@@ -7,8 +7,6 @@
                 #:parse-type))
 (in-package #:ploy/type-infer)
 
-(declaim (optimize (speed 0) (debug 3)))
-
 (define-class constraint ())
 
 (define-class eq-constraint
