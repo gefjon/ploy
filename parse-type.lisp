@@ -52,3 +52,12 @@
                  :args (mapcar (curry #'parse-type scope) args)
                  :ret (parse-type scope ret)))
 
+
+(define-type (ploy-user:|forall| args body) (scope)
+  (let* ((inner-scope (make-instance 'type-scope
+                                     :parent scope))
+         (args (iter (for name in args)
+                 (collect (make-type name inner-scope)))))
+    (make-instance 'ir:forall-type
+                   :args args
+                   :ret (parse-type inner-scope body))))

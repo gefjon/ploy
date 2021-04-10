@@ -2,6 +2,7 @@
   (:use #:ploy/prologue)
   (:nicknames #:ir)
   (:shadow #:prog2 #:let #:quote #:type #:if #:else)
+  (:import-from #:ploy/literal #:literal)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export

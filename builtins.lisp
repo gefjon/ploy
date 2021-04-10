@@ -55,7 +55,7 @@
                  (the fixnum (+ lhs rhs)))))
 
 (defun builtin-let-binding (ident)
-  `(,(car ident) ,(cdr ident)))
+  `(,(ir:name (car ident)) ,(cdr ident)))
 
 (defun enclose-in-builtins (body)
   `(handler-case

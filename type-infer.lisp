@@ -2,7 +2,9 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/builtins
-                #:find-builtin-type))
+                #:find-builtin-type)
+  (:import-from #:ploy/literal
+                #:builtin-type-for-literal))
 (in-package #:ploy/type-infer)
 
 (declaim (optimize (speed 0) (debug 3)))
@@ -73,15 +75,9 @@
                                    :args (mapcar #'ir:type (ir:arglist expr))
                                    :ret (ir:type (ir:body expr))))))
 
-(defun primitive-type-for-constant (constant)
-  (find-builtin-type
-   (etypecase constant
-     (fixnum 'ploy-user:|fixnum|)
-     ((or boolean (member ploy-user:|true| ploy-user:|false|)) 'ploy-user:|boolean|))))
-
 (defmethod collect-constraints append ((expr ir:quote))
   (list (must-be-eq (ir:type expr)
-                    (primitive-type-for-constant (ir:lit expr)))))
+                    (builtin-type-for-literal (ir:lit expr)))))
 
 (define-special *substitutions* (hash-map symbol ir:type))
 

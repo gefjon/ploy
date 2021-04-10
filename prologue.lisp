@@ -7,12 +7,11 @@
                 #:~> #:pipe
                 #:map-slots
                 #:subtypep*)
+  (:import-from #:ploy/ploy-user)
   (:import-from #:alexandria
                 #:curry #:rcurry #:if-let #:when-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table)
   (:export
    #:gensymify
-
-   #:*literal-classes* #:literal
 
    ;;; reexports
    ;; gefjon-utils
@@ -26,21 +25,6 @@
    #:curry #:rcurry #:if-let #:when-let #:ensure-gethash #:make-gensym #:symbolicate #:alist-hash-table))
 (in-package #:ploy/prologue)
 
-(eval-when (:compile-toplevel :load-toplevel)
-  (defun ploy-user-symbol-p (symbol)
-    (and (symbolp symbol)
-         (eq (symbol-package symbol)
-             (find-package 'ploy-user))))
-  (defun gensym-p (symbol)
-    (and (symbolp symbol)
-         (not (symbol-package symbol)))))
-
 (typedec #'gensymify (func (&rest (or symbol string)) symbol))
 (defun gensymify (&rest stuff)
   (gensym (format nil "~{~a-~}" stuff)))
-
-(eval-when (:compile-toplevel :load-toplevel)
-  (defparameter *literal-classes* '(fixnum double-float)))
-
-(deftype literal ()
-  `(or ,@*literal-classes*))

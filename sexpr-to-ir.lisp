@@ -4,6 +4,7 @@
   (:import-from #:ploy/ir)
   (:import-from #:ploy/ploy-user)
   (:import-from #:ploy/builtins #:*builtin-terms* #:*builtin-types*)
+  (:import-from #:ploy/literal #:*literal-classes*)
   (:export
    #:parse-program #:parse-type #:global-scope
 
@@ -53,10 +54,11 @@
 
 (defmacro define-literals ()
   (cons 'cl:progn
-        (iter (for literal in *literal-classes*)
-          (collect `(defmethod parse-ir ((scope scope) (remaining-body null) (literal ,literal))
-                      ,(format nil "Treat a ~a as a literal, returning it" literal)
-                      (declare (ignorable scope remaining-body))
+        (iter (for (specializer) in *literal-classes*)
+          (collect `(defmethod parse-ir ((scope scope) (remaining-body null) (literal ,specializer))
+                      ,(format nil "Treat a ~a as a literal, returning it" specializer)
+                      (declare (ignorable scope))
+                      (assert (null remaining-body))
                       (make-instance 'ir:quote :lit literal))))))
 (define-literals)
 
@@ -151,11 +153,11 @@
 (define-expr (ploy-user:|quote| term) (enclosing-scope remaining-body)
   (assert (not remaining-body) ()
           "quoted literal unused: ~a" term)
-  (if (typep term 'literal)
-      ;; avoid double-quoting literals
-      (parse-ir enclosing-scope nil term)
-      (make-instance 'quote
-                     :term (parse-ir enclosing-scope nil term))))
+  (let* ((quoted (parse-ir enclosing-scope nil term)))
+    ;; avoid double-quoting literals, since their `parse-ir' method constructs a `quote' object
+    (if (typep quoted 'ir:quote)
+        quoted
+        (make-instance 'ir:quote :lit quoted))))
 
 (typedec #'parse-program (func (list &optional scope) ir:expr))
 (defun parse-program (program &optional (scope (global-scope)))
