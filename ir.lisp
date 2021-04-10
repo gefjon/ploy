@@ -16,6 +16,9 @@
    #:fn-type #:args #:ret
    #:forall-type #:args #:body
 
+   #:type-constructor #:args
+   #:type-application #:constructor #:args
+
    #:expr #:type #:type-boundp
    #:if #:predicate #:then #:else
    #:prog2 #:discard #:ret
@@ -61,6 +64,16 @@
 (define-class forall-type
     ((args (list-of type-variable))
      (body type))
+  :superclasses (type))
+
+(define-class type-constructor
+    ((args (list-of type-variable)))
+  ;; should this be a `type' ?
+  :superclasses (type name))
+
+(define-class type-application
+    ((constructor type)
+     (args (list-of type)))
   :superclasses (type))
 
 ;;; visitor methods

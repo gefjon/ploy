@@ -10,6 +10,8 @@
 
    #:+
 
-   #:|fixnum| #:|boolean| #:|never|
+   #:|fixnum| #:|boolean| #:|never| #:|list| #:|forall|
 
-   #:|true| #:|false|))
+   #:|true| #:|false|
+
+   #:|nil| #:|cons|))

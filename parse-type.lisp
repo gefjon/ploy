@@ -47,6 +47,12 @@
      (destructuring-bind ,arglist tail
        ,@body)))
 
+(defmethod parse-type-form ((scope type-scope) constructor &rest args)
+  "Fallback: parse as an `ir:type-application'"
+  (make-instance 'ir:type-application
+                 :constructor (parse-type scope constructor)
+                 :args (mapcar (curry #'parse-type scope) args)))
+
 (define-type (ploy-user:|fn| args ret) (scope)
   (make-instance 'ir:fn-type
                  :args (mapcar (curry #'parse-type scope) args)
@@ -60,4 +66,4 @@
                  (collect (make-type name inner-scope)))))
     (make-instance 'ir:forall-type
                    :args args
-                   :ret (parse-type inner-scope body))))
+                   :body (parse-type inner-scope body))))

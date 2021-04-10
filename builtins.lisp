@@ -16,15 +16,25 @@
 (in-package #:ploy/builtins)
 
 (defmacro define-builtin-types (builtin-types &body names)
-  (flet ((construct-type (name)
-           `(make-instance 'ir:primitive-type :name ',name)))
+  (labels ((construct-primitive (name)
+             `(make-instance 'ir:primitive-type :name ',name))
+           (construct-ctor (name args)
+             `(make-instance 'ir:type-constructor
+                             :name ',name
+                             :args ',args))
+           (construct-type (name)
+           (etypecase name
+             (symbol (construct-primitive name))
+             (list (construct-ctor (first name) (rest name))))))
     `(progn
        (typedec ,builtin-types (list-of ir:type))
        (defparameter ,builtin-types
          (list ,@(mapcar #'construct-type names))))))
 
 (define-builtin-types *builtin-types*
-  ploy-user:|fixnum| ploy-user:|boolean| ploy-user:|never|)
+  ploy-user:|fixnum| ploy-user:|boolean| ploy-user:|never|
+
+  (ploy-user:|list| |a|))
 
 (defparameter *global-type-scope*
   (iter (with scope = (empty-type-scope))
@@ -55,7 +65,10 @@
   (ploy-user:+ (|fn| (|fixnum| |fixnum|) |fixnum|)
                (lambda (lhs rhs)
                  (declare (fixnum lhs rhs))
-                 (the fixnum (+ lhs rhs)))))
+                 (the fixnum (+ lhs rhs))))
+  (ploy-user:|cons| (|forall| (|a|) (|fn| (|a| (|list| |a|)) (|list| |a|)))
+             (lambda (elt list)
+               (cons elt list))))
 
 (defun builtin-let-binding (ident)
   `(,(ir:name (car ident)) ,(cdr ident)))
