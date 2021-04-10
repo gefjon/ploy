@@ -27,6 +27,13 @@
     (ploy-user:|false| nil)
     (otherwise (ir:lit expr))))
 
+(defmethod output-expr ((expr ir:if))
+  (with-slot-accessors (ir:predicate ir:then ir:else) expr
+    (list 'if
+          (output-expr ir:predicate)
+          (output-expr ir:then)
+          (output-expr ir:else))))
+
 (defmethod output-expr ((expr ir:call))
   `(funcall ,(output-expr (ir:operator expr))
             ,@(mapcar #'output-expr (ir:args expr))))

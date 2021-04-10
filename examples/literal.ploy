@@ -1,0 +1,7 @@
+;;;; -*- mode:lisp; -*-
+
+(let x (if true 0 -1))
+
+(let y (if false -1 0))
+
+(+ x y)

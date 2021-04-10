@@ -159,6 +159,15 @@
         quoted
         (make-instance 'ir:quote :lit quoted))))
 
+(define-expr (ploy-user:|if| predicate then &optional (else 'ploy-user:|nil|))
+    (scope remaining-body)
+  (maybe-prog2 scope
+               (make-instance 'ir:if
+                              :predicate (parse-ir scope nil predicate)
+                              :then (parse-ir scope nil then)
+                              :else (parse-ir scope nil else))
+               remaining-body))
+
 (typedec #'parse-program (func (list &optional scope) ir:expr))
 (defun parse-program (program &optional (scope (global-scope)))
   (parse-ir scope (rest program) (first program)))
