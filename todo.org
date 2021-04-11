@@ -1,0 +1,50 @@
+* DONE rework builtin types
+  CLOSED: [2021-04-11 Sun 11:58]
+** DONE eliminate type constructors
+   CLOSED: [2021-04-11 Sun 11:55]
+   instead of having a node of type ~type-constructor~, have type-level bindings, so that
+   ~list~ is a ~type-variable~ which is bound to ~forall a. <primitive !list>~, where
+   ~<primitive !list>~ is an opaque object inaccessible to the user.
+** DONE also rework type primitives?
+   CLOSED: [2021-04-11 Sun 11:55]
+   similarly, have ~fixnum~ be a ~type-variable~ which is bound to ~<primitive !fixnum>~,
+   rather than being a primitive itself?
+
+   pros:
+   - more consistent with how builtin terms work
+   - can rebind primitive names
+
+   cons:
+   - gives false sense that types are like terms
+   - can rebind primitive names
+** DONE rename ~primitive-type~ to ~cl-type~ ?
+   CLOSED: [2021-04-11 Sun 11:55]
+   these are unified by ~equal~ on their contents
+   
+   pros:
+   - could allow exposing other cl types to users
+   - could have "builtin" types defined in a standard lib
+
+   cons:
+   - ties to cl backend
+** TODO consider renaming type variables the way you do term variables
+* TODO emit cl type declarations
+  ~declare type~ for function arguments; ~the~ for all other terms?
+
+  don't emit typedecs for terms whose types are ~type-variable~ s or ~forall-type~ s? or
+  say ~type-variable~ -> ~t~? solution: only emit declarations for primitive types and
+  fn-types, but within fn-types, treat type-variables as t.
+** DONE ~the~ on exprs
+   CLOSED: [2021-04-10 Sat 21:08]
+** TODO ~declare type~ on fn args
+   is this necessary?
+* TODO unification rules for ~forall~ and ~type-application~
+* TODO structs, enums
+  do these emit ~defstruct~ or ~defclass~ forms?
+* TODO type classes
+** TODO syntax
+** TODO typechecker rules
+** TODO builtin instances
+** TODO derived instances
+* TODO error reporting with source locations
+  likely requires rolling your own reader, sadly
