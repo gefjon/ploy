@@ -13,12 +13,12 @@
   (ir:name expr))
 
 (defmethod output-expr ((expr ir:let))
-  `(let ((,(output-expr (ir:binding expr))
+  `(let ((,(ir:name (ir:binding expr))
            ,(output-expr (ir:initform expr))))
      ,(output-expr (ir:body expr))))
 
 (defmethod output-expr ((expr ir:fn))
-  `(lambda ,(mapcar #'output-expr (ir:arglist expr))
+  `(lambda ,(mapcar #'ir:name (ir:arglist expr))
      ,(output-expr (ir:body expr))))
 
 (defmethod output-expr ((expr ir:quote))
@@ -37,3 +37,27 @@
 (defmethod output-expr ((expr ir:call))
   `(funcall ,(output-expr (ir:operator expr))
             ,@(mapcar #'output-expr (ir:args expr))))
+
+(defgeneric output-type (type))
+
+(defmethod output-expr :around ((expr ir:expr))
+  (let* ((body (call-next-method)))
+    (if (and (ir:type-boundp expr)
+             (typep (ir:type expr)
+                    '(or ir:primitive-type ir:fn-type)))
+        (list 'the (output-type (ir:type expr)) body)
+        body)))
+
+(defmethod output-type ((type ir:primitive-type))
+  (ecase (ir:name type)
+    (ploy-user:|fixnum| 'fixnum)
+    (ploy-user:|boolean| 'boolean)
+    (ploy-user:|never| nil)))
+
+(defmethod output-type ((type ir:type-variable))
+  (declare (ignorable type))
+  t)
+
+(defmethod output-type ((type ir:fn-type))
+  `(function ,(mapcar #'output-type (ir:args type))
+             (values ,(output-type (ir:ret type)) &optional)))
