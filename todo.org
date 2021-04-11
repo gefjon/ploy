@@ -41,10 +41,32 @@
 * TODO unification rules for ~forall~ and ~type-application~
 * TODO structs, enums
   do these emit ~defstruct~ or ~defclass~ forms?
+* TODO type declaration syntax
 * TODO type classes
-** TODO syntax
+** TODO decide syntax
 ** TODO typechecker rules
 ** TODO builtin instances
 ** TODO derived instances
 * TODO error reporting with source locations
   likely requires rolling your own reader, sadly
+* TODO modules
+** TODO decide compilation semantics
+   possibilities:
+*** hash-table
+    a module is a hash-table which exists at both compile-time and runtime which maps
+    ~ploy-user~ symbols to:
+    - ~macro~ nodes
+    - ~type~ nodes
+    - ~quote~ nodes which hold arbitrary terms
+*** object
+    a module is an object which exists at compile-time which has three fields:
+    - ~macros~, a hash-table from ~ploy-user~ symbols to ~macro~ nodes
+    - ~types~, a hash-table from ~ploy-user~ symbols to ~type~ nodes
+    - ~terms~, a hash-table from ~ploy-user~ symbols to either:
+      - opaque objects which exist at runtime and can be "dereferenced" to retrieve terms
+        - possibly gensyms with ~symbol-value~ bound?
+      - terms themselves which can be spliced into forms at compile time
+        - does externaliziability matter?
+** TODO basic implementation
+   without worrying about recompilation
+** TODO automatic recompilation of dependents
