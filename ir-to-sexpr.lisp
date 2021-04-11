@@ -44,15 +44,12 @@
   (let* ((body (call-next-method)))
     (if (and (ir:type-boundp expr)
              (typep (ir:type expr)
-                    '(or ir:primitive-type ir:fn-type)))
+                    '(or ir:cl-type ir:fn-type)))
         (list 'the (output-type (ir:type expr)) body)
         body)))
 
-(defmethod output-type ((type ir:primitive-type))
-  (ecase (ir:name type)
-    (ploy-user:|fixnum| 'fixnum)
-    (ploy-user:|boolean| 'boolean)
-    (ploy-user:|never| nil)))
+(defmethod output-type ((type ir:cl-type))
+  (ir:body type))
 
 (defmethod output-type ((type ir:type-variable))
   (declare (ignorable type))

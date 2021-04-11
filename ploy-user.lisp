@@ -10,7 +10,10 @@
 
    #:+
 
-   #:|fixnum| #:|boolean| #:|never| #:|list| #:|forall|
+   #:|cl-type| #:|forall|
+
+   #:|fixnum| #:|boolean| #:|never| #:|list|
+
 
    #:|true| #:|false|
 

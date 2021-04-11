@@ -67,3 +67,7 @@
     (make-instance 'ir:forall-type
                    :args args
                    :body (parse-type inner-scope body))))
+
+(define-type (ploy-user:|cl-type| body) (scope)
+  (make-instance 'ir:cl-type
+                 :body body))

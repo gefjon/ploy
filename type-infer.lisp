@@ -2,7 +2,7 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/builtins
-                #:parse-builtin-type #:literal-type)
+                #:parse-builtin-type)
   (:import-from #:ploy/parse-type
                 #:parse-type))
 (in-package #:ploy/type-infer)
@@ -73,6 +73,13 @@
                                    :args (mapcar #'ir:type (ir:arglist expr))
                                    :ret (ir:type (ir:body expr))))))
 
+(defun literal-type (lit)
+  (parse-builtin-type
+   (etypecase lit
+     (fixnum 'ploy-user:|fixnum|)
+     ((member ploy-user:|true| ploy-user:|false|) 'ploy-user:|boolean|)
+     ((eql ploy-user:|nil|) 'ploy-user:|list|))))
+
 (defmethod collect-constraints append ((expr ir:quote))
   (list (must-be-eq (ir:type expr)
                     (literal-type (ir:lit expr)))))
@@ -115,8 +122,9 @@
   (mapc #'solve-eq-constraint (ir:args lht) (ir:args rht))
   (solve-eq-constraint (ir:ret lht) (ir:ret rht)))
 
-(defmethod solve-eq-constraint ((lht ir:primitive-type) (rht ir:primitive-type))
-  (assert (ir:same-ident-p lht rht))
+(defmethod solve-eq-constraint ((lht ir:cl-type) (rht ir:cl-type))
+  (assert (equal (ir:body lht) (ir:body rht)) ()
+          "Unable to unify non-EQUAL cl-types ~a and ~a" lht rht)
   (values))
 
 (defgeneric apply-substitutions (type))

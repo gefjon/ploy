@@ -2,7 +2,6 @@
   (:use #:ploy/prologue)
   (:nicknames #:ir)
   (:shadow #:prog2 #:let #:quote #:type #:if #:else)
-  (:import-from #:ploy/literal #:literal)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
@@ -12,11 +11,9 @@
 
    #:type
    #:type-variable #:name
-   #:primitive-type #:name
+   #:cl-type #:body
    #:fn-type #:args #:ret
    #:forall-type #:args #:body
-
-   #:type-constructor #:args
    #:type-application #:constructor #:args
 
    #:expr #:type #:type-boundp
@@ -53,8 +50,9 @@
 (define-class type-variable ()
   :superclasses (type name))
 
-(define-class primitive-type ()
-  :superclasses (type name))
+(define-class cl-type
+    ((body t))
+  :superclasses (type))
 
 (define-class fn-type
     ((args (list-of type))
@@ -65,11 +63,6 @@
     ((args (list-of type-variable))
      (body type))
   :superclasses (type))
-
-(define-class type-constructor
-    ((args (list-of type-variable)))
-  ;; should this be a `type' ?
-  :superclasses (type name))
 
 (define-class type-application
     ((constructor type)
@@ -120,10 +113,6 @@
 (define-class fn
     ((arglist (list-of ident))
      (body expr))
-  :superclasses (expr))
-
-(define-class quote
-    ((lit literal))
   :superclasses (expr))
 
 (define-class call

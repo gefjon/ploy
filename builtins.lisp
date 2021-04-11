@@ -1,10 +1,9 @@
 (uiop:define-package #:ploy/builtins
   (:use #:ploy/prologue #:cl)
   (:import-from #:ploy/ploy-user
+                #:|cl-type|
                 #:|fixnum| #:|fn| #:|never| #:|forall|
                 #:|list| #:|cons| #:|nil|)
-  (:import-from #:ploy/literal
-                #:literal #:builtin-type-spec-for-literal)
   (:import-from #:ploy/parse-type
                 #:type-scope #:empty-type-scope #:add-type #:parse-type)
   (:import-from #:ploy/ir)
@@ -16,30 +15,24 @@
 (in-package #:ploy/builtins)
 
 (defmacro define-builtin-types (builtin-types &body names)
-  (labels ((construct-primitive (name)
-             `(make-instance 'ir:primitive-type :name ',name))
-           (construct-ctor (name args)
-             `(make-instance 'ir:type-constructor
-                             :name ',name
-                             :args ',args))
-           (construct-type (name)
-           (etypecase name
-             (symbol (construct-primitive name))
-             (list (construct-ctor (first name) (rest name))))))
+  (flet ((make-pair (descriptor)
+           `(cons ',(first descriptor)
+                  (parse-type (empty-type-scope) ',(second descriptor)))))
     `(progn
-       (typedec ,builtin-types (list-of ir:type))
+       (typedec ,builtin-types (list-of (cons symbol ir:type)))
        (defparameter ,builtin-types
-         (list ,@(mapcar #'construct-type names))))))
+         (list ,@(mapcar #'make-pair names))))))
 
 (define-builtin-types *builtin-types*
-  ploy-user:|fixnum| ploy-user:|boolean| ploy-user:|never|
-
-  (ploy-user:|list| |a|))
+  (|fixnum| (|cl-type| fixnum))
+  (|boolean| (|cl-type| boolean))
+  (|never| (|cl-type| nil))
+  (|list| (|forall| (|a|) (|cl-type| list))))
 
 (defparameter *global-type-scope*
   (iter (with scope = (empty-type-scope))
-    (for type in *builtin-types*)
-    (add-type (ir:name type) type scope)
+    (for (name . type) in *builtin-types*)
+    (add-type name type scope)
     (finally (return scope))))
 
 (defmacro define-builtin-terms (parameter-name &body builtins)
@@ -88,7 +81,3 @@
 (typedec #'parse-builtin-type (func (t) ir:type))
 (defun parse-builtin-type (type)
   (parse-type *global-type-scope* type))
-
-(typedec #'literal-type (func (literal) ir:type))
-(defun literal-type (lit)
-  (parse-builtin-type (builtin-type-spec-for-literal lit)))

@@ -4,7 +4,6 @@
   (:import-from #:ploy/ir)
   (:import-from #:ploy/ploy-user)
   (:import-from #:ploy/builtins #:*builtin-terms* #:*builtin-types*)
-  (:import-from #:ploy/literal #:*literal-classes*)
   (:export
    #:parse-program #:parse-type #:global-scope
 
@@ -52,15 +51,15 @@
 (defmethod parse-ir ((scope scope) (remaining-body list) (form cons))
   (apply #'parse-ir-form scope remaining-body form))
 
-(defmacro define-literals ()
+(defmacro define-literals (&rest classes)
   (cons 'cl:progn
-        (iter (for (specializer) in *literal-classes*)
+        (iter (for specializer in classes)
           (collect `(defmethod parse-ir ((scope scope) (remaining-body null) (literal ,specializer))
                       ,(format nil "Treat a ~a as a literal, returning it" specializer)
                       (declare (ignorable scope))
                       (assert (null remaining-body))
                       (make-instance 'ir:quote :lit literal))))))
-(define-literals)
+(define-literals fixnum (eql 'ploy-user:|false|) (eql 'ploy-user:|true|))
 
 (defmethod parse-ir ((scope scope) (remaining-body list) (form symbol))
   (assert (not remaining-body) ()
