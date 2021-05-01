@@ -125,6 +125,10 @@
      (body expr))
   :superclasses (expr))
 
+(define-class quote
+    ((lit t))
+  :superclasses (expr))
+
 (define-class backquote
     ((term expr))
   :superclasses (expr))
