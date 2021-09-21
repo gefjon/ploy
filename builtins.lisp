@@ -1,83 +1,98 @@
 (uiop:define-package #:ploy/builtins
-  (:use #:ploy/prologue #:cl)
+  (:use #:ploy/prologue #:ploy/sexpr-to-ir #:cl)
   (:import-from #:ploy/ploy-user
                 #:|cl-type|
                 #:|fixnum| #:|fn| #:|never| #:|forall|
                 #:|list| #:|cons| #:|nil|)
-  (:import-from #:ploy/parse-type
-                #:type-scope #:empty-type-scope #:add-type #:parse-type)
   (:import-from #:ploy/ir)
   (:export
+   #:ploy-exit #:return-values
    #:*global-type-scope*
    #:enclose-in-builtins
-   #:*builtin-terms* #:find-builtin-term
-   #:*builtin-types* #:parse-builtin-type))
+   #:*builtin-terms*
+   #:*builtin-types*
+   #:find-builtin-type #:find-builtin-term))
 (in-package #:ploy/builtins)
 
 (defmacro define-builtin-types (builtin-types &body names)
   (flet ((make-pair (descriptor)
            `(cons ',(first descriptor)
-                  (parse-type (empty-type-scope) ',(second descriptor)))))
+                  '(parse-type ),(second descriptor))))
     `(progn
        (typedec ,builtin-types (list-of (cons symbol ir:type)))
        (defparameter ,builtin-types
          (list ,@(mapcar #'make-pair names))))))
 
-(define-builtin-types *builtin-types*
-  (|fixnum| (|cl-type| fixnum))
-  (|boolean| (|cl-type| boolean))
-  (|never| (|cl-type| nil))
-  (|list| (|forall| (|a|) (|cl-type| list))))
+(defparameter *global-parser-scope* (make-instance 'parser-scope
+                                            :name 'global-scope
+                                            :parent nil))
 
-(defparameter *global-type-scope*
-  (iter (with scope = (empty-type-scope))
-    (for (name . type) in *builtin-types*)
-    (add-type name type scope)
-    (finally (return scope))))
+(typedec *builtin-types* (hash-map ir:type-variable ir:type))
+(defparameter *builtin-types* (make-hash-table :test 'eq))
 
-(defmacro define-builtin-terms (parameter-name &body builtins)
-  (flet ((construct-pair (builtin-spec)
-           (destructuring-bind (name type value) builtin-spec
-             `(cons (make-instance 'ir:ident
-                                   :name ',name
-                                   :type (parse-type *global-type-scope* ',type))
-                    ,value))))
-    `(progn
-       (typedec ,parameter-name (list-of (cons ir:ident t)))
-       (defparameter ,parameter-name
-         (list ,@(mapcar #'construct-pair builtins))))))
+(typedec *builtin-terms* (hash-map ir:ident (cons ir:type t)))
+(defparameter *builtin-terms* (make-hash-table :test 'eq))
+
+(typedec #'%define-builtin-type (func (symbol (or symbol list)) ir:type))
+(defun %define-builtin-type (name expansion)
+  (let* ((ident (find-type name *global-parser-scope*)))
+    (setf (gethash ident *builtin-types*)
+          (parse-type *empty-parser-scope* expansion))))
+
+(defmacro define-builtin-type (name expansion)
+  `(%define-builtin-type ',name ',expansion))
+
+(define-builtin-type |fixnum| (|cl-type| fixnum))
+(define-builtin-type |boolean| (|cl-type| boolean))
+(define-builtin-type |never| (|cl-type| nil))
+(define-builtin-type |list| (|forall| (|a|) (|cl-type| list)))
+
+(typedec #'%define-builtin-term (func (symbol (or symbol list) t) (cons ir:type t)))
+(defun %define-builtin-term (name type-form value)
+  (let* ((ident (find-ident name *global-parser-scope*))
+         (type (parse-type *global-parser-scope* type-form)))
+    (setf (gethash ident *builtin-terms*)
+          (cons type value))))
+
+(defmacro define-builtin-term (name type value)
+  `(%define-builtin-term ',name ',type ,value))
 
 (define-class ploy-exit
     ((return-values list))
   :condition t)
 
-(define-builtin-terms *builtin-terms*
-  (ploy-user:|exit| (|fn| (|fixnum|) |never|)
-             (lambda (code)
-               (error 'ploy-exit :return-values (list code))))
-  (ploy-user:+ (|fn| (|fixnum| |fixnum|) |fixnum|)
-               (lambda (lhs rhs)
-                 (declare (fixnum lhs rhs))
-                 (the fixnum (+ lhs rhs))))
-  (ploy-user:|cons| (|forall| (|a|) (|fn| (|a| (|list| |a|)) (|list| |a|)))
-             (lambda (elt list)
-               (cons elt list))))
+(define-builtin-term ploy-user:|exit|
+  (|fn| (|fixnum|) |never|)
+  (lambda (code)
+    (error 'ploy-exit :return-values (list code))))
+(define-builtin-term ploy-user:+
+  (|fn| (|fixnum| |fixnum|) |fixnum|)
+  (lambda (lhs rhs)
+    (declare (fixnum lhs rhs))
+    (the fixnum (+ lhs rhs))))
+(define-builtin-term ploy-user:|cons|
+  (|forall| (|a|) (|fn| (|a| (|list| |a|)) (|list| |a|)))
+  (lambda (elt list)
+    (cons elt list)))
 
-(defun builtin-let-binding (ident)
-  `(,(ir:name (car ident)) ,(cdr ident)))
-
+(typedec #'enclose-in-builtins (func (ir:expr) ir:expr))
 (defun enclose-in-builtins (body)
-  `(handler-case
-       (let ,(mapcar #'builtin-let-binding *builtin-terms*)
-         (declare (ignorable ,@(mapcar (~> #'car #'ir:name) *builtin-terms*)))
-         ,body)
-     (ploy-exit (e) (values-list (return-values e)))))
+  (iter (with inner = body)
+    (for (name (type . initform)) in-hashtable *builtin-terms*)
+    (setf inner (make-instance 'ir:let
+                               :body inner
+                               :initform (make-instance 'ir:quote
+                                                        :type type
+                                                        :lit initform)
+                               :binding name
+                               :type (ir:type inner)
+                               :ignorablep t))
+    (finally (return inner))))
+
+(typedec #'find-builtin-type (func (symbol) ir:type-variable))
+(defun find-builtin-type (name)
+  (find-type name *global-parser-scope*))
 
 (typedec #'find-builtin-term (func (symbol) ir:ident))
 (defun find-builtin-term (name)
-  (car (or (find name *builtin-terms* :key (~> #'car #'ir:name) :test #'eq)
-           (error "unknown builtin fn ~a" name))))
-
-(typedec #'parse-builtin-type (func (t) ir:type))
-(defun parse-builtin-type (type)
-  (parse-type *global-type-scope* type))
+  (find-ident name *global-parser-scope*))

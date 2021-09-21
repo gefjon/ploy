@@ -1,7 +1,9 @@
 (uiop:define-package #:ploy/ir-to-sexpr
   (:import-from #:ploy/ir)
   (:use #:ploy/prologue)
-  (:export #:output-program))
+  (:import-from #:ploy/type-infer
+                #:apply-type-application)
+  (:export #:output-program #:output-type #:output-expr))
 (in-package #:ploy/ir-to-sexpr)
 
 (defgeneric output-expr (expr))
@@ -15,6 +17,8 @@
 (defmethod output-expr ((expr ir:let))
   `(let ((,(ir:name (ir:binding expr))
            ,(output-expr (ir:initform expr))))
+     ,@(when (ir:ignorablep expr)
+        `((declare (ignorable ,(ir:name (ir:binding expr))))))
      ,(output-expr (ir:body expr))))
 
 (defmethod output-expr ((expr ir:fn))
@@ -58,3 +62,9 @@
 (defmethod output-type ((type ir:fn-type))
   `(function ,(mapcar #'output-type (ir:args type))
              (values ,(output-type (ir:ret type)) &optional)))
+
+(defmethod output-type ((type ir:type-application))
+  (output-type (apply-type-application type)))
+
+(defmethod output-type ((type ir:forall-type))
+  (output-type (ir:body type)))

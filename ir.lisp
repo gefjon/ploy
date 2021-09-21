@@ -7,7 +7,7 @@
   (:export
    #:map-nested-exprs #:map-nested-types
 
-   #:gen-ident #:same-ident-p
+   #:gen-ident #:freshen-name #:same-ident-p
 
    #:type
    #:type-variable #:name
@@ -20,7 +20,7 @@
    #:if #:predicate #:then #:else
    #:prog2 #:discard #:ret
    #:ident #:name
-   #:let #:binding #:initform #:body
+   #:let #:binding #:initform #:ignorablep #:body
    #:fn #:arglist #:body
    #:quote #:lit
    #:call #:operator #:args
@@ -107,6 +107,8 @@
 (define-class let
     ((binding ident)
      (initform expr)
+     (ignorablep boolean
+                 :initform nil)
      (body expr))
   :superclasses (expr))
 
@@ -210,7 +212,13 @@
   (make-instance 'ir:ident
                  :name (make-gensym name)))
 
+(typedec #'freshen-name (func (name) name))
+(defun freshen-name (name)
+  (shallow-copy name
+                :name (make-gensym (name name))))
+
 (typedec #'same-ident-p (func (t t) boolean))
 (defun same-ident-p (lhs rhs)
   (and (eq (class-of lhs) (class-of rhs))
+       (subtypep (class-of lhs) (find-class 'name))
        (eq (ir:name lhs) (ir:name rhs))))

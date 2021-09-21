@@ -2,10 +2,27 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/builtins
-                #:parse-builtin-type)
-  (:import-from #:ploy/parse-type
-                #:parse-type))
+                #:find-builtin-type)
+  (:export #:type-infer
+           #:apply-type-application))
 (in-package #:ploy/type-infer)
+
+;;; some forward-decls of generic functions
+
+(defgeneric annotate-types (expr))
+
+(defgeneric collect-constraints (expr)
+  (:method-combination append))
+
+(defgeneric solve-constraint (constraint))
+
+(defgeneric solve-eq-constraint (lht rht))
+
+(defgeneric apply-substitutions (type))
+
+(defgeneric free-type-variables (thing))
+
+;;; constraint classes
 
 (define-class constraint ())
 
@@ -14,12 +31,84 @@
      (rhs ir:type))
   :superclasses (constraint))
 
+;;; and constructors
+
 (defun must-be-eq (lhs rhs)
   (make-instance 'eq-constraint
                  :lhs lhs
                  :rhs rhs))
 
-(defgeneric annotate-types (expr))
+;;; special variables for traversals
+
+(define-special *variable-types* (hash-map symbol ir:forall-type))
+
+(defmacro with-variable-types (&body body)
+  `(let* ((*variable-types* (make-hash-table :test 'eq)))
+     ,@body))
+
+(define-class substitutions
+    ((substs (hash-map ir:type ir:type)
+             :initform (make-hash-table :test 'eq))
+     (parent (or null substitutions))))
+
+(typedec *substitutions* (or null substitutions))
+(defparameter *substitutions* nil)
+
+(defun call-with-substitutions (thunk)
+  (let* ((*substitutions* (make-instance 'substitutions :parent *substitutions*)))
+    (funcall thunk)))
+
+(defmacro with-substitutions (&body body)
+  `(call-with-substitutions (lambda () ,@body)))
+
+(typedec #'substitute-1 (func (ir:type-variable &optional substitutions)
+                              (or null ir:type)))
+(defun substitute-1 (old &optional (substitutions *substitutions*))
+  (values (gethash old (substs substitutions))))
+
+(typedec #'substitute-var (func (ir:type-variable &optional (or null substitutions))
+                                (or null ir:type)))
+(defun substitute-var (old &optional (substitutions *substitutions*))
+  (when substitutions
+    (or (substitute-1 old substitutions)
+        (substitute-var old (parent substitutions)))))
+
+;;; instantiating generic types
+
+(defun instantiate (forall)
+  (make-instance 'ir:type-application
+                 :constructor forall
+                 :args (mapcar #'ir:freshen-name (ir:args forall))))
+
+;;; ftv methods
+
+(defmethod free-type-variables ((types list))
+  (iter (for type in types)
+    (unioning (free-type-variables type)
+              test #'ir:same-ident-p)))
+
+(defmethod free-type-variables ((type ir:cl-type))
+  (declare (ignorable type))
+  nil)
+
+(defmethod free-type-variables ((type ir:type-variable))
+  (list type))
+
+(defmethod free-type-variables ((type ir:fn-type))
+  (union (free-type-variables (ir:args type))
+         (free-type-variables (ir:ret type))
+         :test #'ir:same-ident-p))
+
+(defmethod free-type-variables ((type ir:forall-type))
+  (set-difference (free-type-variables (ir:body type))
+                  (ir:args type)
+                  :test #'ir:same-ident-p))
+
+(defmethod free-type-variables ((type ir:type-application))
+  (union (free-type-variables (ir:constructor type))
+         (free-type-variables (ir:args type))))
+
+;;; adding initial type information to exprs, without constraints or solutions
 
 (defun add-type-variable (expr &optional (name (make-gensym 'type-variable-)))
   (if (ir:type-boundp expr) expr
@@ -27,14 +116,37 @@
                     :type (make-instance 'ir:type-variable
                                          :name name))))
 
-(defmethod annotate-types ((expr ir:ident))
-  (add-type-variable expr (ir:name expr)))
+(defmethod annotate-types ((expr ir:let))
+  (let* ((unsolved-initform (annotate-types (ir:initform expr)))
+         (init-constraints (collect-constraints unsolved-initform))
+         (solved-initform (with-substitutions
+                            (mapc #'solve-constraint init-constraints)
+                            (apply-substitutions unsolved-initform)))
+         (solved-type (ir:type solved-initform))
+         (scheme (make-instance 'ir:forall-type
+                                :args (free-type-variables solved-type)
+                                :body solved-type))
+         (initform (shallow-copy solved-initform
+                                 :type scheme))
+         (binding (shallow-copy (ir:binding expr)
+                                :type scheme)))
+    (setf (gethash (ir:name (ir:binding expr)) *variable-types*)
+          scheme)
+    (add-type-variable (shallow-copy expr
+                                     :binding binding
+                                     :initform initform
+                                     :body (annotate-types (ir:body expr))))))
 
 (defmethod annotate-types ((expr ir:expr))
   (ir:map-nested-exprs #'annotate-types (add-type-variable expr)))
 
-(defgeneric collect-constraints (expr)
-  (:method-combination append))
+(defmethod annotate-types ((expr ir:ident))
+  (if-let ((scheme (gethash (ir:name expr) *variable-types*)))
+    (shallow-copy expr
+                  :type (instantiate scheme))
+    (add-type-variable expr)))
+
+;;; finding constraints on exprs
 
 (defmethod collect-constraints append ((expr ir:expr) &aux constraints)
   (flet ((visit (subexpr)
@@ -51,16 +163,14 @@
 
 (defmethod collect-constraints append ((expr ir:if))
   (list (must-be-eq (ir:type (ir:predicate expr))
-                    (parse-builtin-type 'ploy-user:|boolean|))
+                    (find-builtin-type 'ploy-user:|boolean|))
         (must-be-eq (ir:type (ir:then expr))
                     (ir:type (ir:else expr)))
         (must-be-eq (ir:type expr)
                     (ir:type (ir:then expr)))))
 
 (defmethod collect-constraints append ((expr ir:let))
-  (list (must-be-eq (ir:type (ir:binding expr))
-                    (ir:type (ir:initform expr)))
-        (must-be-eq (ir:type expr)
+  (list (must-be-eq (ir:type expr)
                     (ir:type (ir:body expr)))))
 
 (defmethod collect-constraints append ((expr ir:prog2))
@@ -74,7 +184,7 @@
                                    :ret (ir:type (ir:body expr))))))
 
 (defun literal-type (lit)
-  (parse-builtin-type
+  (find-builtin-type
    (etypecase lit
      (fixnum 'ploy-user:|fixnum|)
      ((member ploy-user:|true| ploy-user:|false|) 'ploy-user:|boolean|)
@@ -84,25 +194,35 @@
   (list (must-be-eq (ir:type expr)
                     (literal-type (ir:lit expr)))))
 
-(define-special *substitutions* (hash-map symbol ir:type))
+;;; defining and resolving type-substitutions for solutions
 
 (defun find-substitution (type)
   (when (typep type 'ir:type-variable)
-    (values (gethash (ir:name type) *substitutions*))))
+    (substitute-var type)))
 
 (typedec #'add-substitution (func (ir:type-variable ir:type) void))
 (defun add-substitution (old new)
+  (assert *substitutions*)
   (when (ir:same-ident-p old new)
     (return-from add-substitution (values)))
   (if-let ((already-substituded (find-substitution old)))
     (solve-eq-constraint already-substituded new)
     (let* ((better-new (apply-substitutions new)))
-      (setf (gethash (ir:name old) *substitutions*) better-new)))
+      (setf (gethash (ir:name old) (substs *substitutions*)) better-new)))
   (values))
 
-(defgeneric solve-constraint (constraint))
+(defmethod apply-substitutions ((old ir:type-variable))
+  (if-let ((new (substitute-var old)))
+    (apply-substitutions new)
+    old))
 
-(defgeneric solve-eq-constraint (lht rht))
+(defmethod apply-substitutions ((old ir:type))
+  (ir:map-nested-types #'apply-substitutions old))
+
+(defmethod apply-substitutions ((old ir:expr))
+  (ir:map-nested-types #'apply-substitutions old))
+
+;;; solving constraints
 
 (defmethod solve-constraint ((constraint eq-constraint))
   (with-slot-accessors (lhs rhs) constraint
@@ -127,22 +247,38 @@
           "Unable to unify non-EQUAL cl-types ~a and ~a" lht rht)
   (values))
 
-(defgeneric apply-substitutions (type))
+(defmethod solve-eq-constraint ((lht ir:forall-type) rht)
+  (solve-eq-constraint (instantiate lht) rht))
 
-(defmethod apply-substitutions ((old ir:type-variable))
-  (if-let ((new (gethash (ir:name old) *substitutions*)))
-    (apply-substitutions new)
-    old))
+(defmethod solve-eq-constraint (lht (rht ir:forall-type))
+  (solve-eq-constraint lht (instantiate rht)))
 
-(defmethod apply-substitutions ((old ir:type))
-  (ir:map-nested-types #'apply-substitutions old))
+(typedec #'apply-type-application (func (ir:type-application) ir:type))
+(defun apply-type-application (type-app)
+  (with-slot-accessors (ir:constructor (params ir:args)) type-app
+    (assert (typep ir:constructor 'ir:forall-type) ()
+            "CONSTRUCTOR ~a is not a FORALL-TYPE in TYPE-APPLICATION ~a"
+            ir:constructor type-app)
+    (with-slot-accessors (ir:body ir:args) ir:constructor
+      (assert (= (length params) (length ir:args)))
+      (with-substitutions
+        (iter (for param in params)
+          (for arg in ir:args)
+          (add-substitution arg param))
+        (apply-substitutions ir:body)))))
 
-(defmethod apply-substitutions ((old ir:expr))
-  (ir:map-nested-types #'apply-substitutions old))
+(defmethod solve-eq-constraint (lht (rht ir:type-application))
+  (solve-eq-constraint lht (apply-type-application rht)))
+
+(defmethod solve-eq-constraint ((lht ir:type-application) rht)
+  (solve-eq-constraint (apply-type-application lht) rht))
+
+;;; the external interface
 
 (defun type-infer (expr)
-  (let* ((*substitutions* (make-hash-table :test 'eq))
-         (typed (annotate-types expr))
-         (constraints (collect-constraints typed)))
-    (mapc #'solve-constraint constraints)
-    (apply-substitutions typed)))
+  (with-substitutions
+    (with-variable-types
+      (let* ((typed (annotate-types expr))
+             (constraints (collect-constraints typed)))
+        (mapc #'solve-constraint constraints)
+        (apply-substitutions typed)))))
