@@ -1,0 +1,7 @@
+;;;; -*- mode:lisp; -*-
+
+(let (add-to-front elt list)
+  (cons elt list))
+
+(add-to-front 2 (add-to-front 1 nil))
+(add-to-front true (add-to-front false nil))

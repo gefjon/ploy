@@ -29,6 +29,7 @@
   (case (ir:lit expr)
     (ploy-user:|true| t)
     (ploy-user:|false| nil)
+    (ploy-user:|nil| nil)
     (otherwise (ir:lit expr))))
 
 (defmethod output-expr ((expr ir:if))
@@ -41,6 +42,10 @@
 (defmethod output-expr ((expr ir:call))
   `(funcall ,(output-expr (ir:operator expr))
             ,@(mapcar #'output-expr (ir:args expr))))
+
+(defmethod output-expr ((expr ir:prog2))
+  `(prog2 ,(output-expr (ir:discard expr))
+       ,(output-expr (ir:ret expr))))
 
 (defmethod output-expr ((expr ir:the))
   ;; don't emit a `cl:the' form; just the inner expr.

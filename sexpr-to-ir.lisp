@@ -133,7 +133,7 @@
                       (declare (ignorable scope))
                       (assert (null remaining-body))
                       (make-instance 'ir:quote :lit literal))))))
-(define-literals fixnum (eql 'ploy-user:|false|) (eql 'ploy-user:|true|))
+(define-literals fixnum (eql 'ploy-user:|false|) (eql 'ploy-user:|true|) (eql 'ploy-user:|nil|))
 
 (defmethod parse-expr ((scope parser-scope) (remaining-body list) (form symbol))
   (assert (not remaining-body) ()
