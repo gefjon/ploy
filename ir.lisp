@@ -1,7 +1,7 @@
 (uiop:define-package #:ploy/ir
   (:use #:ploy/prologue)
   (:nicknames #:ir)
-  (:shadow #:prog2 #:let #:quote #:type #:if #:else)
+  (:shadow #:prog2 #:let #:quote #:type #:if #:else #:the)
   (:import-from #:closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
@@ -26,7 +26,8 @@
    #:call #:operator #:args
    #:macro #:arglist #:body
    #:backquote #:term
-   #:comma #:term))
+   #:comma #:term
+   #:the #:term))
 (in-package #:ploy/ir)
 
 ;;; visitor interfaces
@@ -136,6 +137,11 @@
   :superclasses (expr))
 
 (define-class comma
+    ((term expr))
+  :superclasses (expr))
+
+(define-class the
+    ;; remember that `expr' already has a slot `type'
     ((term expr))
   :superclasses (expr))
 

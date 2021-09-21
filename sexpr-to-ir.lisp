@@ -243,6 +243,12 @@
                               :else (parse-expr scope nil else))
                remaining-body))
 
+(define-expr (ploy-user:|the| type term) (scope remaining-body)
+  (maybe-prog2 scope (make-instance 'ir:the
+                                    :type (parse-type scope type)
+                                    :term (parse-expr scope nil term))
+               remaining-body))
+
 (typedec #'parse-program (func (list parser-scope) ir:expr))
 (defun parse-program (program scope)
   (parse-expr scope (rest program) (first program)))

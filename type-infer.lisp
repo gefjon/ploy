@@ -183,6 +183,10 @@
                                    :args (mapcar #'ir:type (ir:arglist expr))
                                    :ret (ir:type (ir:body expr))))))
 
+(defmethod collect-constraints append ((expr ir:the))
+  (list (must-be-eq (ir:type expr)
+                    (ir:type (ir:term expr)))))
+
 (defun literal-type (lit)
   (find-builtin-type
    (etypecase lit

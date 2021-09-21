@@ -1,7 +1,7 @@
 ;;;; -*- mode:lisp; -*-
 
 (let (foo bar)
-  (let baz 15)
+  (let baz (the fixnum 15))
   (+ baz bar))
 
-(foo -45)
+(the fixnum (foo -45))

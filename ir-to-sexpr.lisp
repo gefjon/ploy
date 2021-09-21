@@ -42,6 +42,9 @@
   `(funcall ,(output-expr (ir:operator expr))
             ,@(mapcar #'output-expr (ir:args expr))))
 
+(defmethod output-expr ((expr ir:the))
+  (output-expr (ir:term expr)))
+
 (defgeneric output-type (type))
 
 (defmethod output-expr :around ((expr ir:expr))
