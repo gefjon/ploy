@@ -43,17 +43,23 @@
             ,@(mapcar #'output-expr (ir:args expr))))
 
 (defmethod output-expr ((expr ir:the))
+  ;; don't emit a `cl:the' form; just the inner expr.
+  ;; an `around' method will emit a `the' form if appropriate.
   (output-expr (ir:term expr)))
 
 (defgeneric output-type (type))
 
 (defmethod output-expr :around ((expr ir:expr))
-  (let* ((body (call-next-method)))
-    (if (and (ir:type-boundp expr)
-             (typep (ir:type expr)
-                    '(or ir:cl-type ir:fn-type)))
-        (list 'the (output-type (ir:type expr)) body)
-        body)))
+  "If meaningful, wrap the expr in a `cl:the' form.
+
+By \"meaningful\", i mean, if the type will be more specific than `cl:t'."
+  (let* ((body (call-next-method))
+         (type (if (ir:type-boundp expr)
+                   (output-type (ir:type expr))
+                   t)))
+    (if (eq type t)
+        body
+        (list 'the type body))))
 
 (defmethod output-type ((type ir:cl-type))
   (ir:body type))

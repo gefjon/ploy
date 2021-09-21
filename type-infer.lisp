@@ -2,7 +2,7 @@
   (:use #:ploy/prologue)
   (:import-from #:ploy/ir)
   (:import-from #:ploy/builtins
-                #:find-builtin-type)
+                #:find-builtin-type #:*builtin-types*)
   (:export #:type-infer
            #:apply-type-application))
 (in-package #:ploy/type-infer)
@@ -52,7 +52,9 @@
      (parent (or null substitutions))))
 
 (typedec *substitutions* (or null substitutions))
-(defparameter *substitutions* nil)
+(defparameter *substitutions* (make-instance 'substitutions
+                                             :parent nil
+                                             :substs *builtin-types*))
 
 (defun call-with-substitutions (thunk)
   (let* ((*substitutions* (make-instance 'substitutions :parent *substitutions*)))
@@ -259,17 +261,20 @@
 
 (typedec #'apply-type-application (func (ir:type-application) ir:type))
 (defun apply-type-application (type-app)
+  ;; FIXME: avoid using enclosing substitutions, which may be from a different scope than where the type
+  ;; originates
   (with-slot-accessors (ir:constructor (params ir:args)) type-app
-    (assert (typep ir:constructor 'ir:forall-type) ()
-            "CONSTRUCTOR ~a is not a FORALL-TYPE in TYPE-APPLICATION ~a"
-            ir:constructor type-app)
-    (with-slot-accessors (ir:body ir:args) ir:constructor
-      (assert (= (length params) (length ir:args)))
-      (with-substitutions
-        (iter (for param in params)
-          (for arg in ir:args)
-          (add-substitution arg param))
-        (apply-substitutions ir:body)))))
+    (let* ((ctor (apply-substitutions ir:constructor)))
+      (assert (typep ctor 'ir:forall-type) ()
+              "CONSTRUCTOR ~a is not a FORALL-TYPE in TYPE-APPLICATION ~a"
+              ctor type-app)
+      (with-slot-accessors (ir:body ir:args) ctor
+        (assert (= (length params) (length ir:args)))
+        (with-substitutions
+          (iter (for param in params)
+            (for arg in ir:args)
+            (add-substitution arg param))
+          (apply-substitutions ir:body))))))
 
 (defmethod solve-eq-constraint (lht (rht ir:type-application))
   (solve-eq-constraint lht (apply-type-application rht)))
