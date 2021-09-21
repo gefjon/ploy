@@ -1,10 +1,10 @@
-(uiop:define-package #:ploy/reader
-  (:use #:ploy/prologue)
-  (:import-from #:ploy/ploy-user)
-  (:import-from #:named-readtables
+(uiop:define-package :ploy/reader
+  (:use :ploy/prologue)
+  (:import-from :ploy/ploy-user)
+  (:import-from :named-readtables
                 #:defreadtable #:find-readtable)
   (:export #:ploy-read #:ploy-read-file))
-(in-package #:ploy/reader)
+(in-package :ploy/reader)
 
 (typedec #'reader-fn (func (symbol) (func (stream character) list)))
 (defun reader-fn (symbol)

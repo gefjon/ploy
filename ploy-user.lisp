@@ -1,6 +1,6 @@
-(uiop:define-package #:ploy/ploy-user
+(uiop:define-package :ploy/ploy-user
   (:use)
-  (:nicknames #:ploy-user)
+  (:nicknames :ploy-user)
   (:export
    #:|let| #:|scope| #:|fn| #:|macro| #:|macrolet| #:|if| #:|the|
 

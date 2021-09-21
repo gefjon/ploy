@@ -1,10 +1,13 @@
-(uiop:define-package #:ploy/ir-to-sexpr
-  (:import-from #:ploy/ir)
-  (:use #:ploy/prologue)
-  (:import-from #:ploy/type-infer
+(uiop:define-package :ploy/ir-to-sexpr
+  (:import-from :ploy/ir)
+  (:use :ploy/prologue)
+  (:import-from :ploy/type-infer
                 #:apply-type-application)
-  (:export #:output-program #:output-type #:output-expr))
-(in-package #:ploy/ir-to-sexpr)
+  (:export
+   #:output-program
+   #:output-type
+   #:output-expr))
+(in-package :ploy/ir-to-sexpr)
 
 (defgeneric output-expr (expr))
 

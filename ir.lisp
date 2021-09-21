@@ -1,8 +1,8 @@
-(uiop:define-package #:ploy/ir
-  (:use #:ploy/prologue)
-  (:nicknames #:ir)
+(uiop:define-package :ploy/ir
+  (:use :ploy/prologue)
+  (:nicknames :ir)
   (:shadow #:prog2 #:let #:quote #:type #:if #:else #:the)
-  (:import-from #:closer-mop
+  (:import-from :closer-mop
                 #:class-slots #:slot-definition-type #:slot-value-using-class)
   (:export
    #:map-nested-exprs #:map-nested-types
@@ -28,7 +28,7 @@
    #:backquote #:term
    #:comma #:term
    #:the #:term))
-(in-package #:ploy/ir)
+(in-package :ploy/ir)
 
 ;;; visitor interfaces
 

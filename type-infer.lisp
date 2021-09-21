@@ -1,11 +1,11 @@
-(uiop:define-package #:ploy/type-infer
-  (:use #:ploy/prologue)
-  (:import-from #:ploy/ir)
-  (:import-from #:ploy/builtins
+(uiop:define-package :ploy/type-infer
+  (:use :ploy/prologue)
+  (:import-from :ploy/ir)
+  (:import-from :ploy/builtins
                 #:find-builtin-type #:*builtin-types*)
   (:export #:type-infer
            #:apply-type-application))
-(in-package #:ploy/type-infer)
+(in-package :ploy/type-infer)
 
 ;;; some forward-decls of generic functions
 

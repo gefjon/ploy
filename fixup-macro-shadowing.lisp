@@ -1,8 +1,8 @@
-(uiop:define-package #:ploy/fixup-macro-shadowing
-  (:use #:ploy/prologue)
-  (:import-from #:ploy/ir)
+(uiop:define-package :ploy/fixup-macro-shadowing
+  (:use :ploy/prologue)
+  (:import-from :ploy/ir)
   (:export #:fixup-shadowing-in-program))
-(in-package #:ploy/fixup-macro-shadowing)
+(in-package :ploy/fixup-macro-shadowing)
 
 (defun rename-ident (ident)
   (ir:gen-ident (ir:name ident)))

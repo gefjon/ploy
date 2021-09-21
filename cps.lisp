@@ -1,10 +1,10 @@
-(uiop:define-package #:ploy/cps
-  (:use #:ploy/prologue)
-  (:import-from #:ploy/builtins
+(uiop:define-package :ploy/cps
+  (:use :ploy/prologue)
+  (:import-from :ploy/builtins
                 #:find-builtin-term)
-  (:import-from #:ploy/ir)
+  (:import-from :ploy/ir)
   (:export #:cps-transform-program))
-(in-package #:ploy/cps)
+(in-package :ploy/cps)
 
 (defgeneric cps-transform (expr continuation))
 

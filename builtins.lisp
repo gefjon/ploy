@@ -1,10 +1,10 @@
-(uiop:define-package #:ploy/builtins
-  (:use #:ploy/prologue #:ploy/sexpr-to-ir #:cl)
-  (:import-from #:ploy/ploy-user
+(uiop:define-package :ploy/builtins
+  (:use :ploy/prologue :ploy/sexpr-to-ir :cl)
+  (:import-from :ploy/ploy-user
                 #:|cl-type|
                 #:|fixnum| #:|fn| #:|never| #:|forall|
                 #:|list| #:|cons| #:|nil|)
-  (:import-from #:ploy/ir)
+  (:import-from :ploy/ir)
   (:export
    #:ploy-exit #:return-values
    #:*global-type-scope*
@@ -12,7 +12,7 @@
    #:*builtin-terms*
    #:*builtin-types*
    #:find-builtin-type #:find-builtin-term))
-(in-package #:ploy/builtins)
+(in-package :ploy/builtins)
 
 (defmacro define-builtin-types (builtin-types &body names)
   (flet ((make-pair (descriptor)
